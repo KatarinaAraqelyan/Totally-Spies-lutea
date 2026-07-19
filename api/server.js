@@ -21,8 +21,6 @@ const COHORT = path.join(DATA, 'cohort.json');        // public learned referenc
 const PORT = process.env.PORT || 8080;
 const MAX_RECORDS = 800;                               // per-donation cap (abuse guard)
 
-fs.mkdirSync(DATA, { recursive: true });
-
 /* ---- canonical signals + physiological plausibility ranges ---- */
 const SIGMAP = {
   rhr:'rhr', resting_heart_rate:'rhr', restingheartrate:'rhr',
@@ -283,4 +281,13 @@ const server = http.createServer(async (req,res)=>{
 
   json(res,404,{ ok:false, error:'not found' });
 });
-server.listen(PORT, ()=> console.log('lutea-api on :'+PORT+' data='+DATA));
+
+/* The de-identification + learning core is exported so the convergence benchmark
+ * (docs/benchmark/cohort_convergence.js) exercises the SAME code the live cohort
+ * runs, not a re-implementation. The HTTP server only boots when run directly. */
+module.exports = { sanitize, updateAgg, buildCohort, loadAgg, pct, ageBandLower, SIGMAP, RANGE, PHASES };
+
+if (require.main === module){
+  fs.mkdirSync(DATA, { recursive: true });
+  server.listen(PORT, ()=> console.log('lutea-api on :'+PORT+' data='+DATA));
+}

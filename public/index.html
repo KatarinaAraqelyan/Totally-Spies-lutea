@@ -156,6 +156,22 @@ section.stage{padding:96px 0;position:relative;border-top:1px solid var(--line)}
 .api-tbl td:first-child{font-family:var(--mono);color:var(--ink);white-space:nowrap;width:200px}
 .api-tbl code{font-family:var(--mono);color:var(--rose-2);font-size:12px}
 .api-tbl .req{color:var(--gold);font-size:9.5px;font-family:var(--cond);letter-spacing:.12em;text-transform:uppercase;margin-left:8px}
+/* ── convergence benchmark card ── */
+.bench{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:18px 18px 12px;margin-top:12px}
+.bench-empty{font-family:var(--mono);font-size:12px;color:var(--ink-3);padding:22px 0;text-align:center}
+.bench-stats{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px}
+.bench-stat{background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:8px 12px;flex:1;min-width:120px}
+.bench-stat .bs-n{font-family:var(--serif);font-size:22px;color:var(--ink);line-height:1.1}
+.bench-stat .bs-n small{font-size:12px;color:var(--ink-3);font-family:var(--cond)}
+.bench-stat .bs-l{font-family:var(--cond);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3);margin-top:3px}
+.bench-svg{width:100%;height:auto;display:block;overflow:visible}
+.bench-line{fill:none;stroke:var(--rose);stroke-width:2;stroke-linejoin:round;stroke-linecap:round}
+.bench-dot{fill:var(--rose)}
+.bench-mark{stroke:var(--gold);stroke-width:1.4;stroke-dasharray:4 4}
+.bench-marktx{fill:var(--gold);font-family:var(--cond);font-size:10px;letter-spacing:.06em}
+.bench-grid{stroke:var(--line);stroke-width:1}
+.bench-axtx{fill:var(--ink-3);font-family:var(--mono);font-size:9px}
+.bench-cap{font-family:var(--mono);font-size:11px;color:var(--ink-3);margin-top:8px;text-align:center}
 .ip-block{margin-bottom:36px}
 .ip-head{font-family:var(--serif);font-size:clamp(22px,3.4vw,28px);color:var(--ink);margin-bottom:16px;
   display:flex;align-items:center;gap:13px}
@@ -624,6 +640,10 @@ footer .fine{font-family:var(--mono);font-size:11px;color:var(--ink-3);letter-sp
     "30": { "n": 1180, "p": [52, 57, 61, 66, 74] }
   }
 }</pre>
+
+        <div class="api-lbl">Does the learning actually work? · benchmark</div>
+        <div class="api-note">We draw donations from the published NHANES distribution and watch the cohort's <b>learned</b> percentiles converge to the <b>real CDC</b> values — running the exact production pipeline. Error in bpm, lower is better; the marker is the 50-sample point where a band's learned percentiles supersede the static table. Reproducible: <code>node docs/benchmark/cohort_convergence.js</code>.</div>
+        <div id="benchmarkChart" class="bench"><div class="bench-empty">Loading benchmark…</div></div>
 
         <div class="api-row"><span class="api-verb">POST</span><span class="api-path">/api/donate</span></div>
         <div class="api-note">Contribute a de-identified export to the cohort. Identifiers are stripped on-device and again server-side. Explicit consent required.</div>
