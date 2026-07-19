@@ -1,0 +1,42 @@
+services:
+  lutea:
+    image: nginx:alpine
+    container_name: lutea
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:5062:80"
+    volumes:
+      - ./public:/usr/share/nginx/html:ro
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - lutea-api
+    labels:
+      - "com.centurylinklabs.watchtower.enable=false"
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O-", "http://127.0.0.1/healthz"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  lutea-api:
+    image: node:20-alpine
+    container_name: lutea-api
+    restart: unless-stopped
+    working_dir: /app
+    command: node server.js
+    environment:
+      - LUTEA_DATA=/data
+      - PORT=8080
+    volumes:
+      - ./api:/app:ro
+      - lutea_corpus:/data
+    labels:
+      - "com.centurylinklabs.watchtower.enable=false"
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O-", "http://127.0.0.1:8080/healthz"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+volumes:
+  lutea_corpus:

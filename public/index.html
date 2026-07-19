@@ -1,0 +1,824 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>LUTEA: Hormonal intelligence from your wearable</title>
+<meta name="theme-color" content="#08090d" />
+<meta name="description" content="Upload your Fitbit, Oura or Garmin export. LUTEA reads your cycle and surfaces hormonal-health signals calibrated against clinical reference data." />
+<link rel="icon" href="favicon.svg" type="image/svg+xml" />
+<link rel="icon" href="favicon-32.png" sizes="32x32" type="image/png" />
+<link rel="apple-touch-icon" href="apple-touch-icon.png" />
+<link rel="canonical" href="https://lutea.administration.ae/" />
+<meta property="og:type" content="website" />
+<meta property="og:site_name" content="Lutea" />
+<meta property="og:title" content="Lutea: hormonal intelligence from your wearable" />
+<meta property="og:description" content="Your body keeps a rhythm. We read it, from the Fitbit, Oura or Garmin you already wear. Cycle detection, ovulation signature, and your numbers vs. clinical norms." />
+<meta property="og:url" content="https://lutea.administration.ae/" />
+<meta property="og:image" content="https://lutea.administration.ae/og-image.png" />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="Lutea: hormonal intelligence from your wearable" />
+<meta name="twitter:description" content="Your body keeps a rhythm. We read it, from the Fitbit, Oura or Garmin you already wear." />
+<meta name="twitter:image" content="https://lutea.administration.ae/og-image.png" />
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"WebApplication","name":"Lutea",
+ "url":"https://lutea.administration.ae/",
+ "applicationCategory":"HealthApplication","operatingSystem":"Web",
+ "description":"Lutea turns the data your Fitbit, Oura or Garmin already records into a hormonal-health read-out: it detects your menstrual-cycle phases, confirms the post-ovulation temperature signature, measures the premenstrual autonomic load, and places your resting heart rate against NHANES 2021–2023 clinical reference data for women your age.",
+ "offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},
+ "image":"https://lutea.administration.ae/og-image.png",
+ "citation":"Built on the mcPHASES research cohort (PhysioNet) and NHANES 2021–2023 (CDC)"}
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=IBM+Plex+Mono:wght@300;400;500&family=IBM+Plex+Sans:wght@300;400;500;600&family=IBM+Plex+Sans+Condensed:wght@400;500;600&display=swap" rel="stylesheet" />
+<style>
+:root{
+  --bg:#08090d;
+  --bg-2:#0c0d14;
+  --surface:#0e0f16;
+  --surface-2:#12131c;
+  --ink:#f3eef9;
+  --ink-2:#d0c9de;
+  --ink-3:#a89fbd;
+  --ink-4:#6e6688;
+  --line:rgba(255,255,255,0.09);
+  --line-2:rgba(255,255,255,0.17);
+  --line-3:rgba(255,255,255,0.28);
+
+  --rose:#e0566c;
+  --rose-2:#f2879a;
+  --rose-glow:rgba(224,86,108,0.35);
+  --blush:#f6b8c4;
+  --plum:#8b6ad0;
+  --gold:#d8a657;
+  --mint:#7fd1a8;
+  --amber:#e0a94a;
+
+  --serif:'Cormorant Garamond',Georgia,'Times New Roman',serif;
+  --sans:'IBM Plex Sans',ui-sans-serif,system-ui,sans-serif;
+  --cond:'IBM Plex Sans Condensed',var(--sans);
+  --mono:'IBM Plex Mono',ui-monospace,Menlo,Consolas,monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{
+  background:var(--bg);color:var(--ink);font-family:var(--sans);
+  font-size:15px;line-height:1.6;overflow-x:hidden;
+  -webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;
+}
+::selection{background:var(--rose-glow);color:#fff}
+a{color:inherit;text-decoration:none}
+canvas{display:block}
+
+/* ── background layers ─────────────────────────── */
+#gl{position:fixed;inset:0;z-index:0;pointer-events:none}
+#grain{position:fixed;inset:0;z-index:1;pointer-events:none;opacity:.05;mix-blend-mode:overlay;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");}
+#vignette{position:fixed;inset:0;z-index:1;pointer-events:none;
+  background:radial-gradient(120% 90% at 50% 0%,transparent 40%,rgba(4,4,8,.65) 100%);}
+
+.wrap{position:relative;z-index:2;max-width:960px;margin:0 auto;padding:0 24px}
+
+/* ── micro label ───────────────────────────────── */
+.mlabel{font-family:var(--cond);font-size:11.5px;letter-spacing:.28em;text-transform:uppercase;color:var(--ink-3)}
+.mval{font-family:var(--mono);font-variant-numeric:tabular-nums}
+
+/* ── topbar ────────────────────────────────────── */
+.topbar{position:fixed;top:0;left:0;right:0;z-index:20;height:52px;display:flex;align-items:center;
+  justify-content:space-between;padding:0 24px;
+  background:linear-gradient(180deg,rgba(8,9,13,.82),rgba(8,9,13,0));
+  backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);border-bottom:1px solid transparent;transition:.4s}
+.topbar.solid{background:rgba(8,9,13,.9);border-bottom:1px solid var(--line)}
+.brand{display:flex;align-items:center;gap:10px}
+.brand .dot{width:8px;height:8px;border-radius:50%;background:var(--rose);box-shadow:0 0 12px 2px var(--rose-glow)}
+.brand .name{font-family:var(--serif);font-size:22px;letter-spacing:.14em;color:var(--ink)}
+.topbar .status{display:flex;align-items:center;gap:14px}
+.topbar .status .mlabel{font-size:10px}
+
+/* ── hero ──────────────────────────────────────── */
+.hero{min-height:100vh;display:flex;flex-direction:column;justify-content:center;position:relative;padding:120px 0 80px}
+.hero .kicker{display:inline-flex;align-items:center;gap:10px;margin-bottom:26px}
+.hero .kicker .ln{width:34px;height:1px;background:var(--line-3)}
+.hero h1{font-family:var(--serif);font-weight:500;font-size:clamp(56px,11vw,132px);line-height:.92;letter-spacing:.02em;color:var(--ink)}
+.hero h1 em{font-style:italic;color:var(--rose-2)}
+.hero .sub{margin-top:28px;max-width:540px;font-size:19px;line-height:1.65;color:var(--ink-2);font-weight:300}
+.hero .sub b{color:var(--ink);font-weight:500}
+.hero .cta-row{margin-top:44px;display:flex;gap:14px;flex-wrap:wrap;align-items:center}
+.btn{font-family:var(--cond);font-size:13px;letter-spacing:.16em;text-transform:uppercase;
+  padding:13px 24px;border:1px solid var(--line-2);color:var(--ink);cursor:pointer;background:transparent;
+  transition:.25s;display:inline-flex;align-items:center;gap:10px}
+.btn:hover{border-color:var(--rose);color:#fff;box-shadow:0 0 24px -6px var(--rose-glow)}
+.btn.primary{background:linear-gradient(120deg,var(--rose),#c23e56);border-color:transparent;color:#fff}
+.btn.primary:hover{box-shadow:0 0 34px -4px var(--rose-glow);transform:translateY(-1px)}
+.btn.ghost{color:var(--ink-2);border-color:var(--line)}
+.scrollcue{position:absolute;bottom:34px;left:50%;transform:translateX(-50%);display:flex;flex-direction:column;
+  align-items:center;gap:8px;color:var(--ink-3)}
+.scrollcue .mlabel{font-size:9px}
+.scrollcue .bar{width:1px;height:38px;background:linear-gradient(180deg,var(--rose),transparent);animation:cue 2.4s ease-in-out infinite}
+@keyframes cue{0%,100%{opacity:.2;transform:scaleY(.5)}50%{opacity:1;transform:scaleY(1)}}
+
+/* ── section frame ─────────────────────────────── */
+section.stage{padding:96px 0;position:relative;border-top:1px solid var(--line)}
+.shead{display:flex;align-items:baseline;gap:16px;margin-bottom:8px}
+.shead .num{font-family:var(--mono);font-size:12px;color:var(--rose);letter-spacing:.1em}
+.shead h2{font-family:var(--serif);font-weight:500;font-size:clamp(30px,5vw,46px);line-height:1.05;color:var(--ink)}
+.sdesc{max-width:560px;color:var(--ink-2);font-weight:300;font-size:16px;margin-bottom:40px}
+
+/* ── app view + tabs ───────────────────────────── */
+.nav{display:flex;gap:2px;align-items:center}
+.navlink{font-family:var(--cond);font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-3);
+  background:transparent;border:none;padding:9px 15px;cursor:pointer;transition:.2s;position:relative;white-space:nowrap}
+.navlink:hover{color:var(--ink)}
+.navlink.active{color:#fff}
+.navlink.active::after{content:"";position:absolute;left:15px;right:15px;bottom:1px;height:1.5px;
+  background:var(--rose);box-shadow:0 0 10px var(--rose-glow)}
+.page{display:none}
+.page.active{display:block}
+.page.pad{padding:96px 0 60px;min-height:100vh;animation:tabin .4s ease}
+@keyframes tabin{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+/* ── API docs ──────────────────────────────────── */
+.api-row{display:flex;align-items:center;gap:12px;margin-bottom:10px;flex-wrap:wrap}
+.api-verb{font-family:var(--mono);font-size:12px;font-weight:600;color:#fff;background:var(--rose);
+  padding:5px 11px;border-radius:3px;letter-spacing:.08em}
+.api-verb.get{background:var(--mint);color:#08201a}
+.api-row{margin-top:22px}
+.api-path{font-family:var(--mono);font-size:14px;color:var(--ink);word-break:break-all}
+.api-note{font-family:var(--mono);font-size:12px;color:var(--ink-3);margin-bottom:6px}
+.api-note code{color:var(--ink-2)}
+.api-lbl{font-family:var(--cond);font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-3);margin:24px 0 10px}
+.api-code{font-family:var(--mono);font-size:12.5px;line-height:1.6;color:var(--ink-2);background:var(--surface);
+  border:1px solid var(--line);border-radius:4px;padding:18px 20px;overflow-x:auto;white-space:pre}
+.api-tbl{width:100%;border-collapse:collapse;font-size:13px;font-weight:300}
+.api-tbl td{border-top:1px solid var(--line);padding:11px 8px;color:var(--ink-2);vertical-align:top;line-height:1.45}
+.api-tbl td:first-child{font-family:var(--mono);color:var(--ink);white-space:nowrap;width:200px}
+.api-tbl code{font-family:var(--mono);color:var(--rose-2);font-size:12px}
+.api-tbl .req{color:var(--gold);font-size:9.5px;font-family:var(--cond);letter-spacing:.12em;text-transform:uppercase;margin-left:8px}
+.ip-block{margin-bottom:36px}
+.ip-head{font-family:var(--serif);font-size:clamp(22px,3.4vw,28px);color:var(--ink);margin-bottom:16px;
+  display:flex;align-items:center;gap:13px}
+.ip-head::before{content:"";width:22px;height:1px;background:var(--rose);flex:none}
+
+/* ── back-to-top ───────────────────────────────── */
+.gotop{position:fixed;right:22px;bottom:22px;z-index:30;font-family:var(--cond);font-size:12px;
+  letter-spacing:.14em;text-transform:uppercase;color:#fff;background:linear-gradient(120deg,var(--rose),#c23e56);
+  border:none;border-radius:30px;padding:12px 20px;cursor:pointer;box-shadow:0 6px 26px -6px var(--rose-glow);
+  opacity:0;transform:translateY(12px);transition:.3s}
+.gotop.show{opacity:1;transform:none}
+@media(max-width:640px){.gotop{right:16px;bottom:16px;padding:11px 16px}}
+
+/* ── dropzone ──────────────────────────────────── */
+.drop{border:1.5px dashed var(--line-2);background:linear-gradient(180deg,rgba(224,86,108,.04),transparent);
+  border-radius:4px;padding:48px 32px;text-align:center;cursor:pointer;transition:.3s;position:relative;overflow:hidden}
+.drop:hover,.drop.over{border-color:var(--rose);background:linear-gradient(180deg,rgba(224,86,108,.1),transparent)}
+.drop .ico{width:52px;height:52px;margin:0 auto 18px;border:1px solid var(--line-2);border-radius:50%;
+  display:flex;align-items:center;justify-content:center;color:var(--rose);font-size:22px;transition:.3s}
+.drop:hover .ico{border-color:var(--rose);box-shadow:0 0 22px -4px var(--rose-glow)}
+.drop .big{font-family:var(--serif);font-size:26px;color:var(--ink);margin-bottom:6px}
+.drop .small{color:var(--ink-3);font-size:13px;font-family:var(--cond);letter-spacing:.06em}
+.sources{display:flex;gap:10px;justify-content:center;margin-top:22px;flex-wrap:wrap}
+.src-chip{font-family:var(--cond);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-2);
+  border:1px solid var(--line);padding:6px 14px;border-radius:2px}
+.src-chip b{color:var(--rose-2);font-weight:600}
+.filelist{margin-top:22px;display:flex;flex-direction:column;gap:6px}
+.filerow{display:flex;align-items:center;gap:12px;font-family:var(--mono);font-size:12px;color:var(--ink-2);
+  padding:8px 12px;background:var(--surface);border:1px solid var(--line);border-radius:2px}
+.filerow .ok{color:var(--mint)}.filerow .warn{color:var(--amber)}
+.filerow .nm{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+/* ── upload steps strip ────────────────────────── */
+.steps{display:flex;gap:14px;flex-wrap:wrap;margin:0 0 34px}
+.step{flex:1;min-width:220px;border:1px solid var(--line);background:var(--surface);padding:15px 17px;border-radius:3px}
+.step .k{font-family:var(--mono);font-size:11px;color:var(--rose);letter-spacing:.08em;margin-bottom:7px}
+.step .t{font-size:13.5px;color:var(--ink-2);font-weight:300;line-height:1.55}
+.step .t b{color:var(--ink);font-weight:500}
+
+/* ── signal checklist ──────────────────────────── */
+.sig-group{margin-top:42px}
+.sig-group .mlabel{display:block;margin-bottom:14px;font-size:13px;color:var(--ink-2);font-weight:500}
+.grid-sig{display:grid;grid-template-columns:1fr;gap:14px}
+.sig{border:1px solid var(--line);background:var(--surface);border-radius:3px;padding:20px 22px;position:relative;
+  opacity:.45;transition:.5s}
+.sig.on{opacity:1;border-color:var(--line-2)}
+.sig.on::before{content:"";position:absolute;left:0;top:0;bottom:0;width:2px;background:var(--rose);box-shadow:0 0 12px var(--rose-glow)}
+.sig .row{display:flex;align-items:center;justify-content:space-between}
+.sig .nm{font-family:var(--cond);letter-spacing:.08em;text-transform:uppercase;font-size:13px;color:var(--ink)}
+.sig .tick{width:18px;height:18px;border-radius:50%;border:1px solid var(--line-2);display:flex;align-items:center;
+  justify-content:center;font-size:11px;color:var(--ink-4);transition:.4s}
+.sig.on .tick{background:var(--rose);border-color:var(--rose);color:#fff}
+.sig .meta{margin-top:9px;font-family:var(--mono);font-size:12px;color:var(--ink-3)}
+.sig .meta .v{color:var(--rose-2);font-size:14px}
+/* ── per-signal chart (health.administration.ae style) ─── */
+.chart{margin-top:14px}
+.ch-head{display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:6px;margin-bottom:9px}
+.ch-avg{font-family:var(--mono);font-size:12.5px;color:var(--ink-2)}
+.ch-avg b{color:var(--ink);font-size:14px}
+.ch-trend{font-family:var(--mono);font-size:11px;color:var(--ink-3)}
+.ch-wrap{position:relative}
+.ch-svg{width:100%;height:120px;display:block;overflow:visible}
+.ch-band{fill:rgba(127,209,168,.10)}
+.ch-bandline{stroke:rgba(127,209,168,.4);stroke-width:1;stroke-dasharray:4 4;vector-effect:non-scaling-stroke}
+.ch-mean{stroke:var(--ink-4);stroke-width:1;stroke-dasharray:2 3;vector-effect:non-scaling-stroke}
+.ch-hit{stroke:transparent;stroke-width:12;pointer-events:stroke;cursor:help}
+.ch-line{fill:none;stroke:var(--rose);stroke-width:1.6;vector-effect:non-scaling-stroke;stroke-linejoin:round;stroke-linecap:round}
+.ch-dot{fill:none;stroke:var(--rose-2);stroke-width:4.5;stroke-linecap:round;vector-effect:non-scaling-stroke}
+.ch-cross{position:absolute;top:0;bottom:0;width:1px;background:rgba(242,135,154,.55);opacity:0;
+  pointer-events:none;transition:opacity .15s}
+.ch-tipbox{position:absolute;top:-10px;transform:translate(-50%,-100%);
+  background:var(--surface-2);border:1px solid var(--rose);color:var(--ink);
+  font-family:var(--mono);font-size:11.5px;padding:6px 10px;border-radius:3px;white-space:nowrap;
+  opacity:0;pointer-events:none;transition:opacity .15s;box-shadow:0 6px 22px rgba(224,86,108,.28);z-index:30}
+.ch-axis{display:flex;justify-content:space-between;margin-top:7px;padding-top:6px;border-top:1px solid var(--line);
+  font-family:var(--mono);font-size:10.5px;color:var(--ink-3)}
+.ch-foot{margin-top:8px}
+.ch-norm{font-family:var(--cond);font-size:11px;letter-spacing:.04em;color:var(--mint)}
+.ch-norm b{color:var(--mint);font-family:var(--mono);letter-spacing:0}
+
+/* cycle phase strip */
+.ph-wrap{position:relative;margin-top:14px}
+.ph-strip{display:flex;height:28px;border-radius:3px;overflow:hidden;background:var(--surface-2)}
+.ph-seg{height:100%}
+.ph-legend{display:flex;gap:16px;flex-wrap:wrap;margin-top:9px}
+.ph-lg{font-family:var(--cond);font-size:11px;letter-spacing:.05em;color:var(--ink-2);
+  display:inline-flex;gap:7px;align-items:center}
+.ph-lg i{width:10px;height:10px;border-radius:2px;display:inline-block}
+
+.whylink{margin-top:10px;background:none;border:none;padding:0;cursor:pointer;display:inline-block;
+  font-family:var(--sans);font-size:12.5px;font-weight:300;color:var(--ink-3);
+  text-decoration:underline;text-underline-offset:3px;text-decoration-color:var(--ink-4);transition:.25s}
+.sig.on .whylink{color:var(--ink-2)}
+.whylink:hover{color:var(--rose-2);text-decoration-color:var(--rose)}
+
+/* ── explainer modal ───────────────────────────── */
+.modal-veil{position:fixed;inset:0;z-index:50;background:rgba(4,4,8,.72);
+  backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);
+  display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:.3s}
+.modal-veil.open{opacity:1;pointer-events:auto}
+.modal{max-width:480px;width:calc(100% - 48px);background:var(--surface-2);border:1px solid var(--line-2);
+  border-top:2px solid var(--rose);border-radius:6px;padding:30px 32px;position:relative;
+  transform:translateY(14px);transition:.3s}
+.modal-veil.open .modal{transform:none}
+.modal-x{position:absolute;top:12px;right:14px;background:none;border:none;color:var(--ink-3);
+  font-size:24px;cursor:pointer;line-height:1;padding:4px}
+.modal-x:hover{color:var(--rose-2)}
+.modal h3{font-family:var(--serif);font-weight:500;font-size:28px;color:var(--ink);margin:4px 0 14px}
+.modal p{color:var(--ink-2);font-size:14.5px;font-weight:300;line-height:1.7}
+/* wide methods modal */
+.modal.mbig{max-width:760px;max-height:86vh;overflow-y:auto;padding:34px 38px;
+  scrollbar-width:thin;scrollbar-color:var(--rose) transparent}
+.modal.mbig::-webkit-scrollbar{width:8px}
+.modal.mbig::-webkit-scrollbar-track{background:transparent;margin:8px 0}
+.modal.mbig::-webkit-scrollbar-thumb{background:linear-gradient(var(--rose),var(--rose-2));
+  border-radius:8px;border:2px solid var(--surface-2)}
+.modal.mbig::-webkit-scrollbar-thumb:hover{background:var(--rose-2)}
+/* data donation */
+.donate-cta{margin-top:30px;display:flex;gap:24px;align-items:center;justify-content:space-between;
+  flex-wrap:wrap;border:1px solid rgba(224,86,108,.4);border-radius:8px;padding:24px 26px;
+  background:linear-gradient(120deg,rgba(224,86,108,.10),rgba(224,86,108,.02))}
+.donate-cta .donate-h{font-family:var(--serif);font-size:24px;color:var(--ink);margin-bottom:6px}
+.donate-cta .sdesc{max-width:440px}
+.donate-cta .btn{flex:none;white-space:nowrap}
+#donateBtn{background:linear-gradient(120deg,var(--rose),#c23e56);border-color:transparent;color:#fff;
+  box-shadow:0 0 0 0 var(--rose-glow);animation:donpulse 2.4s ease-in-out infinite}
+#donateBtn:hover{transform:translateY(-1px);box-shadow:0 0 34px -4px var(--rose-glow);animation:none}
+@keyframes donpulse{0%,100%{box-shadow:0 0 0 0 rgba(224,86,108,.5)}50%{box-shadow:0 0 26px 2px rgba(224,86,108,.45)}}
+.dn-consent{display:flex;gap:12px;align-items:flex-start;border:1px solid var(--line);border-radius:4px;
+  padding:15px 16px;margin:18px 0;cursor:pointer;transition:.2s}
+.dn-consent:hover{border-color:var(--line-2)}
+.dn-consent input{margin-top:3px;width:17px;height:17px;flex:none;accent-color:var(--rose)}
+.dn-consent span{color:var(--ink-2);font-size:13px;font-weight:300;line-height:1.55}
+.dn-consent b{color:var(--ink);font-weight:500}
+.dn-rights{list-style:none;margin:2px 0 20px}
+.dn-rights li{color:var(--ink-3);font-size:12px;font-weight:300;line-height:1.55;padding-left:16px;position:relative;margin-bottom:5px}
+.dn-rights li::before{content:"✓";position:absolute;left:0;color:var(--mint);font-size:11px}
+.dn-drop{border:1px dashed var(--line-2);border-radius:6px;padding:26px 20px;text-align:center;cursor:pointer;transition:.2s}
+.dn-drop:hover,.dn-drop.over{border-color:var(--rose);background:rgba(224,86,108,.04)}
+.dn-drop .k{font-family:var(--cond);font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-2)}
+.dn-drop .s{font-size:12px;color:var(--ink-4);margin-top:6px}
+.dn-drop.disabled{opacity:.4;pointer-events:none}
+/* loader steps */
+.dn-load{margin-top:8px}
+.dn-step{display:flex;gap:12px;align-items:center;padding:9px 0;opacity:.32;transition:.35s}
+.dn-step.active{opacity:1}.dn-step.done{opacity:.85}
+.dn-ic{flex:none;width:22px;height:22px;border-radius:50%;border:1px solid var(--line-2);position:relative;transition:.35s}
+.dn-step.active .dn-ic{border-color:var(--rose);box-shadow:0 0 14px -3px var(--rose-glow)}
+.dn-step.active .dn-ic::after{content:"";position:absolute;inset:5px;border-radius:50%;background:var(--rose);
+  animation:dnpulse 1s ease-in-out infinite}
+.dn-step.done .dn-ic{border-color:var(--mint);background:var(--mint)}
+.dn-step.done .dn-ic::after{content:"✓";position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+  color:#08201a;font-size:12px;font-weight:700}
+.dn-tx{font-size:13.5px;color:var(--ink-2);font-weight:300;line-height:1.4}
+.dn-tx b{color:var(--ink);font-weight:500}
+@keyframes dnpulse{0%,100%{transform:scale(.7);opacity:.6}50%{transform:scale(1);opacity:1}}
+.dn-done{text-align:center;padding:12px 0}
+.dn-done .big{font-family:var(--serif);font-size:30px;color:var(--ink);margin-bottom:8px}
+.dn-done .big b{color:var(--rose-2)}
+.dn-done p{color:var(--ink-2);font-size:14px;font-weight:300;line-height:1.6}
+.dn-err{color:var(--amber);font-size:13px;font-weight:300;line-height:1.5;margin-top:12px}
+.modal.mbig h3{margin-bottom:6px}
+.modal.mbig .msub{color:var(--ink-3);font-size:13px;font-weight:300;line-height:1.6;margin-bottom:22px}
+.msec{border-top:1px solid var(--line);padding-top:18px;margin-top:20px}
+.msec:first-of-type{border-top:none;margin-top:0;padding-top:0}
+.msec h4{font-family:var(--cond);font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--rose-2);margin-bottom:12px}
+.msec p{font-size:13.5px;line-height:1.65;margin-bottom:10px}
+.msec p:last-child{margin-bottom:0}
+.msec b{color:var(--ink);font-weight:500}
+.msec .mform{font-family:var(--mono);font-size:12px;color:var(--ink-2);background:var(--bg-2);border:1px solid var(--line);
+  border-radius:3px;padding:9px 12px;margin:4px 0 12px;display:block;line-height:1.5;overflow-x:auto;white-space:pre-wrap}
+.msec ul{list-style:none;margin:0 0 6px}
+.msec li{color:var(--ink-2);font-size:13.5px;font-weight:300;line-height:1.6;padding-left:16px;position:relative;margin-bottom:5px}
+.msec li::before{content:"–";position:absolute;left:0;color:var(--rose)}
+.msec li b{color:var(--ink)}
+.methodsbtn{background:none;border:none;font-family:var(--mono);font-size:11px;letter-spacing:.06em;color:var(--ink-3);
+  cursor:pointer;border-bottom:1px solid var(--line-2);padding:2px 0;transition:.25s}
+.methodsbtn:hover{color:var(--rose-2);border-color:var(--rose)}
+
+/* featured card, resting heart rate, the primary metric */
+.sig.featured{grid-column:1/-1;padding:20px 22px;opacity:.85;border-color:rgba(224,86,108,.45);
+  background:linear-gradient(135deg,rgba(224,86,108,.08),var(--surface) 55%)}
+.sig.featured.on{opacity:1}
+.sig.featured::before{content:"";position:absolute;left:0;top:0;bottom:0;width:2px;background:var(--rose);box-shadow:0 0 12px var(--rose-glow)}
+.norm{margin-top:16px;padding-top:14px;border-top:1px solid var(--line)}
+.norm-top{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:12px;flex-wrap:wrap;gap:6px}
+.norm-top .cap{font-family:var(--cond);font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--ink-2)}
+.norm-top .rng{font-family:var(--mono);font-size:16px;color:var(--rose-2)}
+.norm-track{position:relative;height:10px;background:var(--surface-2);border-radius:5px}
+.norm-band{position:absolute;top:0;bottom:0;border-radius:5px;
+  background:linear-gradient(90deg,rgba(224,86,108,.22),rgba(224,86,108,.55),rgba(224,86,108,.22))}
+.norm-dot{position:absolute;top:50%;width:14px;height:14px;border-radius:50%;background:#fff;
+  border:3px solid var(--rose);transform:translate(-50%,-50%);box-shadow:0 0 14px var(--rose-glow);cursor:pointer}
+.norm-dot:hover{box-shadow:0 0 22px 4px var(--rose-glow)}
+.norm-tip{position:absolute;bottom:calc(100% + 11px);left:50%;transform:translateX(-50%) translateY(5px);
+  background:var(--surface-2);border:1px solid var(--rose);color:var(--ink);
+  font-family:var(--cond);font-size:11px;letter-spacing:.16em;text-transform:uppercase;
+  padding:7px 12px;border-radius:3px;white-space:nowrap;opacity:0;pointer-events:none;
+  transition:.28s;box-shadow:0 6px 22px rgba(224,86,108,.28)}
+.norm-tip::after{content:"";position:absolute;top:100%;left:50%;transform:translateX(-50%);
+  border:5px solid transparent;border-top-color:var(--rose)}
+.norm-dot:hover .norm-tip{opacity:1;transform:translateX(-50%) translateY(0)}
+.norm-scale{display:flex;justify-content:space-between;margin-top:8px;font-family:var(--mono);font-size:11px;color:var(--ink-3)}
+.norm-src{display:inline-block;margin-top:12px;font-family:var(--mono);font-size:11px;color:var(--ink-3);
+  border-bottom:1px dotted var(--ink-4);transition:.25s}
+.norm-src:hover{color:var(--rose-2);border-color:var(--rose)}
+.sig.premium .tag{position:absolute;top:10px;right:12px;font-family:var(--cond);font-size:8px;letter-spacing:.2em;
+  color:var(--plum);border:1px solid rgba(139,106,208,.4);padding:2px 6px;border-radius:2px}
+
+/* ── data-trust gauge ──────────────────────────── */
+@property --p{syntax:'<number>';inherits:false;initial-value:0}
+.conf{display:flex;gap:28px;align-items:center;border:1px solid var(--line);background:var(--surface);
+  border-radius:4px;padding:24px 28px;flex-wrap:wrap}
+.conf-ring{--p:0;width:112px;height:112px;border-radius:50%;flex:none;position:relative;
+  background:conic-gradient(var(--rose) calc(var(--p)*3.6deg), var(--surface-2) 0)}
+.conf-ring::after{content:"";position:absolute;inset:9px;border-radius:50%;background:var(--surface)}
+.conf-gauge{flex:none;display:flex;flex-direction:column;align-items:center;gap:11px}
+.conf-in{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;z-index:1}
+.conf-pct{font-family:var(--mono);font-size:28px;color:var(--ink);font-variant-numeric:tabular-nums;line-height:1}
+.conf-lab{font-family:var(--cond);font-size:11px;letter-spacing:.16em;text-transform:uppercase;text-align:center}
+.conf-lab.g{color:var(--mint)}.conf-lab.a{color:var(--amber)}.conf-lab.r{color:var(--rose-2)}
+.conf-body{flex:1;min-width:280px}
+.conf-body p{color:var(--ink-2);font-size:15px;font-weight:300;line-height:1.55;margin-bottom:13px}
+.conf-body b{color:var(--ink);font-weight:500}
+.conf-facts{display:flex;flex-wrap:wrap;gap:8px}
+.conf-chip{font-family:var(--mono);font-size:11px;color:var(--ink-2);border:1px solid var(--line);border-radius:2px;padding:5px 11px}
+.conf-chip b{color:var(--rose-2);font-weight:400}
+.conf-warn{margin-top:13px;font-size:12.5px;color:var(--amber);font-weight:300;line-height:1.5}
+
+/* ── insight cards ─────────────────────────────── */
+.grid-ins{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px}
+.icard{border:1px solid var(--line);background:linear-gradient(180deg,var(--surface),var(--bg-2));border-radius:4px;
+  padding:22px;position:relative;overflow:hidden}
+.icard .top{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+.icard .cat{font-family:var(--cond);font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--ink-3)}
+.flag{font-family:var(--cond);font-size:10px;letter-spacing:.14em;text-transform:uppercase;padding:3px 9px;border-radius:2px}
+.flag.g{color:var(--mint);border:1px solid rgba(127,209,168,.35);background:rgba(127,209,168,.06)}
+.flag.a{color:var(--amber);border:1px solid rgba(224,169,74,.35);background:rgba(224,169,74,.06)}
+.flag.r{color:var(--rose-2);border:1px solid rgba(242,135,154,.4);background:rgba(242,135,154,.07)}
+.icard h3{font-family:var(--serif);font-weight:500;font-size:23px;color:var(--ink);margin-bottom:4px;line-height:1.15}
+.icard .num-big{font-family:var(--mono);font-size:34px;color:var(--rose-2);font-variant-numeric:tabular-nums;margin:6px 0 2px}
+.icard .num-big small{font-size:14px;color:var(--ink-3)}
+.icard .desc{color:var(--ink-2);font-size:14px;font-weight:300;line-height:1.55}
+.icard .ref{margin-top:14px;padding-top:12px;border-top:1px solid var(--line);display:flex;justify-content:space-between;
+  font-family:var(--mono);font-size:11px;color:var(--ink-3)}
+.icard .ref .v{color:var(--ink-2)}
+
+.empty{color:var(--ink-3);font-style:italic;font-family:var(--serif);font-size:20px;text-align:center;padding:40px 0}
+
+/* ── how-it-works panel (read-out) ─────────────── */
+.howbox{border:1px solid var(--line);background:var(--surface);border-radius:4px;padding:4px 24px;margin-bottom:24px}
+.how-step{display:flex;gap:16px;align-items:flex-start;padding:17px 0;border-bottom:1px solid var(--line)}
+.how-step:last-child{border-bottom:none}
+.how-step .hn{flex:none;width:27px;height:27px;border-radius:50%;border:1px solid var(--rose);color:var(--rose-2);
+  font-family:var(--mono);font-size:13px;display:flex;align-items:center;justify-content:center;margin-top:1px}
+.how-step .tx{color:var(--ink-2);font-size:14.5px;font-weight:300;line-height:1.55}
+.how-step b{color:var(--ink);font-weight:500}
+
+/* ── screening / risk table ────────────────────── */
+.risk-wrap{display:flex;flex-direction:column;gap:12px}
+.risk-row{display:grid;grid-template-columns:34px 1fr 128px 186px;gap:18px;align-items:center;
+  border:1px solid var(--line);background:linear-gradient(180deg,var(--surface),var(--bg-2));border-radius:4px;padding:18px 20px}
+.risk-row .rk{font-family:var(--serif);font-size:30px;color:var(--ink-4);text-align:center}
+.rtop{display:flex;align-items:center;gap:10px;margin-bottom:5px}
+.rname{font-family:var(--serif);font-size:20px;color:var(--ink);line-height:1.15}
+.rflag{font-family:var(--cond);font-size:10px;letter-spacing:.14em;text-transform:uppercase;padding:2px 8px;border-radius:2px;flex:none}
+.rflag.g{color:var(--mint);border:1px solid rgba(127,209,168,.35)}
+.rflag.a{color:var(--amber);border:1px solid rgba(224,169,74,.35)}
+.rflag.r{color:var(--rose-2);border:1px solid rgba(242,135,154,.4)}
+.rwhy{color:var(--ink-2);font-size:13.5px;font-weight:300;line-height:1.5;margin-bottom:6px}
+.rmeta{font-family:var(--mono);font-size:11.5px;color:var(--ink-3)}
+.rmeta b{color:var(--ink-2)}
+.rscore{text-align:center}
+.rpct{font-family:var(--mono);font-size:24px;color:var(--rose-2);font-variant-numeric:tabular-nums}
+.rbar{height:5px;background:var(--surface-2);border-radius:3px;overflow:hidden;margin:6px 0 5px}
+.rbar i{display:block;height:100%;background:linear-gradient(90deg,var(--rose),var(--rose-2));border-radius:3px;width:0;transition:width 1s cubic-bezier(.2,.7,.2,1)}
+.rlabel{font-family:var(--cond);font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-4)}
+.findbtn{width:100%;font-family:var(--cond);font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink);
+  background:var(--surface);border:1px solid var(--line-2);border-radius:3px;padding:11px 10px;cursor:pointer;transition:.25s}
+.findbtn:hover{border-color:var(--rose);color:#fff;box-shadow:0 0 20px -6px var(--rose-glow)}
+.findbtn:disabled{opacity:.55;cursor:default;box-shadow:none;border-color:var(--line-2);color:var(--ink-3)}
+.rloc{margin-top:10px;font-size:12.5px;color:var(--ink-2);line-height:1.5}
+.rloc a{color:var(--rose-2);text-decoration:none;border-bottom:1px solid rgba(242,135,154,.4)}
+.rloc .dist{font-family:var(--mono);color:var(--ink-3);font-size:11px}
+.notmed{margin-top:22px;font-size:11px;color:var(--ink-4);font-weight:300;line-height:1.55}
+
+/* ── disclaimer / footer ───────────────────────── */
+.disclaim{margin-top:26px;font-size:13px;color:var(--ink-3);font-weight:300;border:1px solid var(--line);
+  border-left:2px solid var(--amber);padding:14px 18px;background:rgba(224,169,74,.03);border-radius:2px}
+footer{padding:70px 0 90px;border-top:1px solid var(--line);text-align:center}
+footer .moat{font-family:var(--serif);font-style:italic;font-size:22px;color:var(--ink-2);max-width:600px;
+  margin:0 auto 26px;line-height:1.5}
+footer .moat b{color:var(--rose-2);font-style:normal}
+footer .fine{font-family:var(--mono);font-size:11px;color:var(--ink-3);letter-spacing:.06em}
+
+/* reveal */
+.rv{opacity:0;transform:translateY(28px)}
+
+/* ── analysis loader ───────────────────────────── */
+.loader{margin-top:26px;border:1px solid var(--line-2);background:var(--surface);border-radius:4px;padding:22px 24px}
+.ld-top{display:flex;align-items:center;gap:12px}
+.ld-pulse{width:10px;height:10px;border-radius:50%;background:var(--rose);box-shadow:0 0 12px var(--rose-glow);
+  animation:ldp 1.1s ease-in-out infinite}
+@keyframes ldp{0%,100%{transform:scale(.8);opacity:.7}50%{transform:scale(1.15);opacity:1}}
+.ld-title{font-family:var(--serif);font-size:22px;color:var(--ink);flex:1}
+.ld-pct{font-family:var(--mono);font-size:13px;color:var(--rose-2);font-variant-numeric:tabular-nums}
+.ld-bar{margin-top:14px;height:4px;background:var(--surface-2);border-radius:2px;overflow:hidden}
+.ld-fill{height:100%;width:0;background:linear-gradient(90deg,var(--rose),var(--rose-2));border-radius:2px}
+.ld-steps{margin-top:16px;list-style:none;display:flex;flex-direction:column;gap:9px}
+.ld-step{display:flex;align-items:center;gap:11px;font-family:var(--mono);font-size:12px;color:var(--ink-4);transition:.3s}
+.ld-step.act{color:var(--ink-2)}
+.ld-step.done{color:var(--ink-3)}
+.ld-tick{width:16px;height:16px;border-radius:50%;border:1px solid var(--line-2);display:inline-flex;
+  align-items:center;justify-content:center;font-size:9px;color:transparent;flex:none;transition:.3s}
+.ld-step.act .ld-tick{border-color:var(--rose);animation:ldp 1.1s infinite}
+.ld-step.done .ld-tick{background:var(--rose);border-color:var(--rose);color:#fff}
+
+/* upload flash, signals the results just refreshed */
+@keyframes flashpulse{
+  0%{box-shadow:0 0 0 0 var(--rose-glow);background:rgba(224,86,108,.10)}
+  100%{box-shadow:0 0 0 0 transparent;background:transparent}
+}
+.flash{animation:flashpulse 1.1s ease-out;border-radius:6px}
+
+@media(max-width:640px){
+  body{font-size:15.5px}
+  .hero{padding:104px 0 90px}
+  .hero .sub{font-size:17.5px}
+  section.stage{padding:64px 0}
+  .wrap{padding:0 18px}
+  .topbar{padding:0 12px;gap:10px}
+  .brand .name{font-size:18px}
+  .nav{overflow-x:auto;-webkit-overflow-scrolling:touch;flex:1;justify-content:flex-end}
+  .nav::-webkit-scrollbar{display:none}
+  .navlink{padding:9px 9px;font-size:11px;letter-spacing:.05em}
+  .ip-head{font-size:21px}
+  .api-tbl td:first-child{width:auto;display:block;padding-bottom:2px;border-top:none}
+  .api-tbl td:last-child{display:block;padding-top:0;border-top:none}
+  .api-tbl tr{display:block;border-top:1px solid var(--line);padding:8px 0}
+  .drop{padding:36px 18px}
+  .drop .big{font-size:22px}
+  .grid-sig{grid-template-columns:1fr}
+  .sig{opacity:.55}
+  .sig.on{opacity:1}
+  .sig.featured{padding:18px 16px}
+  .btn{padding:14px 20px}
+  .cta-row .btn{flex:1;justify-content:center;min-width:140px}
+  .modal{padding:24px 20px;max-height:82vh;overflow-y:auto}
+  .modal h3{font-size:24px}
+  .modal-x{top:8px;right:8px;padding:10px;font-size:26px}
+  .icard{padding:18px}
+  footer .moat{font-size:19px}
+  .norm-tip{opacity:1;transform:translateX(-50%) translateY(0)}
+}
+</style>
+</head>
+<body>
+<canvas id="gl"></canvas>
+<div id="grain"></div>
+<div id="vignette"></div>
+
+<div class="topbar solid" id="topbar">
+  <div class="brand"><span class="dot"></span><span class="name">Lutea</span></div>
+  <nav class="nav" id="nav">
+    <button type="button" class="navlink active" data-page="home">Home</button>
+    <button type="button" class="navlink" data-page="raw">Raw data</button>
+    <button type="button" class="navlink" data-page="insights">Practical insights</button>
+    <button type="button" class="navlink" data-page="api">API</button>
+  </nav>
+</div>
+
+<main id="pages">
+  <!-- PAGE · HOME -->
+  <section class="page active" id="page-home">
+    <div class="wrap">
+      <header class="hero">
+        <div class="kicker"><span class="ln"></span><span class="mlabel">Women's hormonal health · wearable-native</span></div>
+        <h1>Your body keeps<br>a <em>rhythm.</em><br>We read it.</h1>
+        <p class="sub">Upload the export from your <b>Fitbit</b>, <b>Oura</b> or <b>Garmin</b>. Lutea maps your menstrual cycle from the signals your device already records, then surfaces the hormonal patterns hiding in the noise.</p>
+        <div class="cta-row">
+          <button class="btn primary" id="ctaProceed">Proceed <span aria-hidden="true">→</span></button>
+          <a class="btn ghost" id="ctaSample" href="lutea-test-sample.csv" download="lutea-test-sample.csv">Download a test file</a>
+        </div>
+        <input type="file" id="fileInput" accept=".csv,text/csv" multiple hidden />
+      </header>
+    </div>
+    <div class="scrollcue" id="scrollcue"><span class="mlabel">On-device · private</span><span class="bar"></span></div>
+  </section>
+
+  <!-- PAGE · RAW DATA -->
+  <section class="page pad" id="page-raw">
+    <div class="wrap">
+      <div class="drop" id="drop">
+        <div class="ico">↑</div>
+        <div class="big">Drop your export here</div>
+        <div class="small">or click to browse · .csv · multiple files welcome</div>
+        <div class="sources">
+          <span class="src-chip"><b>Fitbit</b> · Takeout</span>
+          <span class="src-chip"><b>Oura</b> · trends export</span>
+          <span class="src-chip"><b>Garmin</b> · Connect export</span>
+        </div>
+      </div>
+      <div class="filelist" id="filelist"></div>
+      <div class="loader" id="loader" hidden>
+        <div class="ld-top"><span class="ld-pulse"></span><span class="ld-title">Analysing your signals</span><span class="ld-pct">0%</span></div>
+        <div class="ld-bar"><div class="ld-fill"></div></div>
+        <ul class="ld-steps"></ul>
+      </div>
+      <div class="ip-block" style="margin-top:28px">
+        <div class="ip-head">How far to trust this</div>
+        <div id="confidence"><div class="empty">Upload your data to see how far the read-out can be trusted.</div></div>
+      </div>
+      <div class="ip-block">
+        <div class="ip-head">Every signal we read</div>
+        <div class="grid-sig" id="sigGrid"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PAGE · PRACTICAL INSIGHTS -->
+  <section class="page pad" id="page-insights">
+    <div class="wrap">
+      <div class="ip-block">
+        <div class="ip-head">Your hormonal read-out</div>
+        <div class="grid-ins" id="insights"><div class="empty" style="grid-column:1/-1">Your read-out appears once we have a cycle to work with.</div></div>
+      </div>
+      <div class="ip-block">
+        <div class="ip-head">What to check next</div>
+        <div class="risk-wrap" id="riskWrap"><div class="empty">Nothing to flag yet.</div></div>
+        <p class="notmed">Not medical advice. Lutea reads consumer wearable data and cannot diagnose any condition. Percentages reflect how strongly your signals match a known pattern, not your odds of having the condition. Always confirm with a licensed clinician.</p>
+      </div>
+      <div class="ip-block">
+        <div class="ip-head">Your cycle</div>
+        <div id="cycleStrip"><div class="empty">No period log or temperature pattern found yet.</div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PAGE · API -->
+  <section class="page pad" id="page-api">
+    <div class="wrap">
+      <div class="ip-block">
+        <div class="ip-head">API</div>
+        <p class="sdesc">An open research API, no key, no account. The analysis runs on your own device; the API exists only to <b>grow and share the open reference cohort</b>. Two endpoints, that's the whole surface.</p>
+
+        <div class="donate-cta">
+          <div>
+            <div class="donate-h">Donate your data to research</div>
+            <p class="sdesc">Contribute your own de-identified export to the shared reference cohort. It never leaves with your name attached, the more women contribute, the sharper every read-out becomes.</p>
+          </div>
+          <button type="button" class="btn" id="donateBtn">Data donation</button>
+        </div>
+
+        <div class="api-row"><span class="api-verb get">GET</span><span class="api-path">/api/cohort</span></div>
+        <div class="api-note">Pull the live, de-identified reference distribution the app compares users against. No auth. Free to reuse.</div>
+        <div class="api-lbl">Response · 200 OK</div>
+        <pre class="api-code">{
+  "updated": "2026-07-19T01:12:53Z",
+  "donations": 214,
+  "days": 6120,
+  "signals": {
+    "rhr":  { "n": 6120, "mean": 61.4, "sd": 6.2 },
+    "hrv":  { "n": 5980, "mean": 48.1, "sd": 14.7 },
+    "temp": { "n": 4102, "mean": 36.3, "sd": 0.24 }
+  },
+  "rhr_by_age": {
+    "30": { "n": 1180, "p": [52, 57, 61, 66, 74] }
+  }
+}</pre>
+
+        <div class="api-row"><span class="api-verb">POST</span><span class="api-path">/api/donate</span></div>
+        <div class="api-note">Contribute a de-identified export to the cohort. Identifiers are stripped on-device and again server-side. Explicit consent required.</div>
+        <div class="api-lbl">Request body</div>
+        <pre class="api-code">{
+  "consent": true,
+  "age": 31,
+  "records": [
+    { "date": "2023-01-01", "rhr": 62.1, "hrv": 55, "skin_temperature": 36.31,
+      "sleep_efficiency": 90.2, "spo2": 96.4, "steps": 9549, "phase": "Menstrual" }
+  ]
+}</pre>
+        <div class="api-lbl">Response · 200 OK</div>
+        <pre class="api-code">{
+  "ok": true,
+  "accepted": 1,
+  "dropped": 0,
+  "identifiers_removed": 0,
+  "cohort_size": 215,
+  "cohort_days": 6121
+}</pre>
+
+        <div class="api-lbl">Signal fields, one object per day in <code>records</code></div>
+        <table class="api-tbl">
+          <tr><td>rhr</td><td>resting heart rate, bpm</td></tr>
+          <tr><td>hrv</td><td>overnight rMSSD, milliseconds</td></tr>
+          <tr><td>skin_temperature</td><td>nightly skin temperature, °C</td></tr>
+          <tr><td>sleep_efficiency</td><td>percent of time in bed asleep</td></tr>
+          <tr><td>respiratory_rate</td><td>breaths per minute</td></tr>
+          <tr><td>spo2</td><td>blood-oxygen saturation, percent</td></tr>
+          <tr><td>steps</td><td>daily step count</td></tr>
+          <tr><td>phase</td><td>Menstrual · Follicular · Fertility · Luteal<span class="req">optional</span></td></tr>
+          <tr><td>consent</td><td>must be <code>true</code>, GDPR lawful basis<span class="req">required</span></td></tr>
+        </table>
+        <p class="notmed">Rate-limited and size-capped to protect the service. Dates are coarsened to relative day offsets and age to 5-year bands before anything is stored; any field shaped like a personal identifier is rejected. Analysis itself needs no API call, it runs entirely in your browser.</p>
+      </div>
+    </div>
+  </section>
+</main>
+
+<button type="button" class="gotop" id="goTop" aria-label="Back to top" hidden>↑ Top</button>
+
+<footer>
+  <div class="wrap">
+    <p class="fine">Lutea · built on the mcPHASES cohort (PhysioNet) &amp; NHANES 2021–2023 · on-device parsing · no account required</p>
+    <p style="margin-top:16px"><button type="button" class="methodsbtn" id="methodsBtn">Methods &amp; Algorithms</button></p>
+  </div>
+</footer>
+
+<div class="modal-veil" id="modalVeil" role="dialog" aria-modal="true">
+  <div class="modal">
+    <button type="button" class="modal-x" id="modalX" aria-label="Close">×</button>
+    <span class="mlabel">What this signal tells you</span>
+    <h3 id="modalTitle"></h3>
+    <p id="modalBody"></p>
+  </div>
+</div>
+
+<div class="modal-veil" id="methodsVeil" role="dialog" aria-modal="true">
+  <div class="modal mbig">
+    <button type="button" class="modal-x" id="methodsX" aria-label="Close">×</button>
+    <span class="mlabel">Reproducibility</span>
+    <h3>Methods &amp; Algorithms</h3>
+    <p class="msub">Every number Lutea shows is computed on your device from a wearable export, no server, no model call. This is the full method behind each screen, in the order the data flows. All source is open on GitHub; this page mirrors the code.</p>
+
+    <div class="msec">
+      <h4>1 · Data ingestion</h4>
+      <p>Your CSV is parsed in the browser. Column headers are matched to eight canonical daily signals: <b>resting heart rate</b> (bpm), <b>heart-rate variability</b> (overnight rMSSD, ms), <b>skin temperature</b> (°C), <b>sleep efficiency</b> (%), <b>respiratory rate</b> (breaths/min), <b>blood-oxygen SpO₂</b> (%), <b>steps</b>, and a <b>cycle / period phase</b> label. These are the fields common to Fitbit, Oura and Garmin exports. Unknown columns are ignored; nothing leaves the device.</p>
+    </div>
+
+    <div class="msec">
+      <h4>2 · Cycle phase model</h4>
+      <p>Each day is labelled Menstrual, Follicular, Fertility or Luteal using the first available source, in this priority:</p>
+      <ul>
+        <li><b>Period log</b>, if the export carries a phase or period marker, we use it directly (highest trust).</li>
+        <li><b>Temperature biphasic split</b>, otherwise the nightly skin-temperature curve is split into a lower follicular half and a warmer luteal half around the post-ovulation rise.</li>
+        <li><b>Resting-HR fallback</b>, with neither, a weaker split is inferred from the resting-HR rhythm across the record.</li>
+      </ul>
+      <p>Every read-out below is computed on this follicular-vs-luteal split. If no source resolves, phase-shifts are withheld and only plain averages are shown.</p>
+    </div>
+
+    <div class="msec">
+      <h4>3 · Phase-shift metric</h4>
+      <p>For any signal we take its mean over follicular days and its mean over luteal days. The reported <b>shift = luteal mean − follicular mean</b>. Temperature and HRV shifts drive the read-out and screening below.</p>
+    </div>
+
+    <div class="msec">
+      <h4>4 · Population percentile (NHANES)</h4>
+      <p>Resting heart rate is ranked against NHANES 2021–2023 (CDC oscillometric pulse, <b>BPXO_L</b>, mean of three seated readings), women 18–45, n = 1,236. Age-band tables hold the [p5, p25, p50, p75, p95] pulse; your mean is linearly interpolated to a percentile. Note: wearable nightly resting HR reads lower than a seated clinical pulse, so most users land low, we label it as a clinical-pulse reference, not a wearable norm.</p>
+    </div>
+
+    <div class="msec">
+      <h4>5 · Hormonal read-out</h4>
+      <ul>
+        <li><b>Ovulation</b>, a luteal temperature shift ≥ 0.20 °C is read as a confirmed biphasic (post-ovulation) curve. Reference band +0.30 to +0.45 °C.</li>
+        <li><b>Luteal autonomic load (PMS physiology)</b>, combines the luteal HRV drop (% of follicular baseline) with the luteal resting-HR rise; a large combined value is the measurable signature of heavy PMS.</li>
+        <li><b>Sleep efficiency</b>, mean % of time-in-bed asleep, healthy at ≥ 88%.</li>
+      </ul>
+    </div>
+
+    <div class="msec">
+      <h4>6 · Screening: "What to check next"</h4>
+      <p>Each condition gets a <b>signal-strength score from 0–100, this is how strongly your pattern matches, NOT a probability of disease.</b> Scores are sorted; the top three show, flagged low / watch / flag at 30 and 55. Formulas:</p>
+      <span class="mform">Ovulation / PCOS pattern  =  (0.32 − temp_shift) / 0.32 × 88 + 6
+Iron-deficiency anemia    =  RHR-percentile + low-HRV + fast-breathing + heavy-period terms
+Thyroid imbalance         =  distance of RHR-percentile from the population median
+Severe PMS / PMDD         =  luteal HRV drop % / 25 × 72 + 8
+Sleep-disordered breathing=  overnight SpO₂ dip + poor sleep terms
+Menopause transition      =  STRAW+10 cycle staging (see below), age-adjusted</span>
+      <p>Each condition also maps to a real confirming test (e.g. ferritin + CBC, TSH, pelvic ultrasound) and a facility class used by the "find where to check" button.</p>
+    </div>
+
+    <div class="msec">
+      <h4>7 · Menopause transition: STRAW+10 staging</h4>
+      <p>Scored directly from the period log using the <b>Stages of Reproductive Aging Workshop +10</b> criteria, the canonical clinical staging standard (Harlow et al., <i>Menopause</i> 2012;19(4):387–395). Two published triggers, each of which independently stages the transition:</p>
+      <ul>
+        <li><b>Early transition (Stage −2):</b> a persistent difference of <b>≥ 7 days</b> in the length of consecutive cycles.</li>
+        <li><b>Late transition (Stage −1):</b> an interval of amenorrhea of <b>≥ 60 days</b>.</li>
+      </ul>
+      <p>We take the stronger of the two signals. Autonomic markers (HRV / resting-HR) are added only as a small, age-gated corroborator, because the crude HRV decline across menopause is largely explained by age and BMI, not menopause itself (Ramesh et al., <i>Physiol Rep</i> 2022). An age prior downweights the score below ~40, since the transition is a reproductive-aging stage.</p>
+      <p><b>Why no endometriosis score:</b> we evaluated it and left it out. The only autonomic evidence is a single small case-control study with no severity dose-response, no replication, and zero consumer-wearable validation (Hao et al., <i>Sci Rep</i> 2021). Scoring it would misrepresent the science, so we don't.</p>
+    </div>
+
+    <div class="msec">
+      <h4>8 · Confidence score</h4>
+      <p>The trust gauge sums three honest factors: the <b>cycle source</b> (period log 45, temperature 32, resting-HR 22, none 5), the number of <b>full shared cycles</b> in the record (up to +35), and the <b>breadth of signals</b> present (up to +20). Labels: ≥ 75 High, ≥ 50 Moderate, ≥ 25 Low, else "not enough yet". Signals covering far fewer days than the rest are flagged as thinning the estimate.</p>
+    </div>
+
+    <div class="msec">
+      <h4>9 · Find where to check</h4>
+      <p>On request, the browser's geolocation queries the OpenStreetMap Overpass API for the nearest matching facility (hospital, clinic, doctors or laboratory) within 15 km, ranked by straight-line (haversine) distance. If location is denied or the query fails, a plain maps-search link is shown instead. No location is stored or transmitted anywhere but the map query.</p>
+    </div>
+
+    <div class="msec">
+      <h4>10 · Data donation &amp; cohort learning</h4>
+      <p>Donated exports pass a <b>two-stage de-identification</b>. On your device, columns and values shaped like identifiers (name, email, phone, address, device/UUID/MAC, GPS, dates of birth) are stripped before anything is sent, data minimisation at source. On the server the same obfuscation check runs again and rejects any record that still carries an identifier; only the whitelisted physiological signals survive. Calendar dates are replaced with cycle-relative day offsets and age is coarsened to 5-year bands (k-anonymity / HIPAA Safe-Harbor style). Lawful basis is your explicit consent (GDPR Art. 6); there is no account and no sale of data.</p>
+      <p><b>Learning algorithm (real, not a mock):</b> each accepted record is appended to a persistent research corpus. Per-signal mean and standard deviation are updated with <b>Welford's online algorithm</b>, and resting-HR values feed a capped per-age-band reservoir from which p5/p25/p50/p75/p95 percentiles are recomputed on every donation. Once an age band accumulates ≥ 50 donated samples, its learned percentiles supersede the static NHANES table for that band, so the reference the app compares you against genuinely sharpens as more women contribute. No black-box model, no fabricated weights: the "learning" is transparent, reproducible cohort statistics.</p>
+    </div>
+
+    <div class="msec">
+      <h4>References</h4>
+      <ul>
+        <li>Harlow SD et al. Executive summary of the Stages of Reproductive Aging Workshop +10. <i>Menopause</i> 2012;19(4):387–395. <b>(STRAW+10 staging)</b></li>
+        <li>NHANES 2021–2023, CDC, oscillometric pulse (BPXO_L) + demographics. <b>(resting-HR percentile)</b></li>
+        <li>Ramesh J et al. HRV across the menopause transition. <i>Physiol Rep</i> 2022;10:e15298. <b>(age-adjusted autonomic caveat)</b></li>
+        <li>Maijala A et al. Nocturnal skin temperature and cycle phase (Oura). <i>BMC Women's Health</i> 2019. <b>(luteal temperature shift)</b></li>
+        <li>Freedman RR, Krell W. Thermoneutral zone in symptomatic women. <i>Am J Obstet Gynecol</i> 1999;181(1):66–70. <b>(vasomotor / temperature)</b></li>
+        <li>Kravitz HM et al. Sleep disturbance across the transition (SWAN). <i>Sleep</i> 2008;31(7):979–990.</li>
+        <li>Hao M et al. Reduced vagal tone in endometriosis. <i>Sci Rep</i> 2021;11:1345. <b>(evaluated, not scored)</b></li>
+      </ul>
+      <p>Full sourcing, effect sizes and evidence grades are documented in the open repository.</p>
+    </div>
+
+    <div class="msec">
+      <h4>Limitations</h4>
+      <p>Lutea reads consumer wearable data only, no blood, imaging or clinical measurement. It cannot diagnose. Percentages are pattern-match strengths, not medical odds. Scores are heuristics calibrated to published reference ranges, not a trained diagnostic model. Always confirm with a licensed clinician.</p>
+    </div>
+  </div>
+</div>
+
+<div class="modal-veil" id="donateVeil" role="dialog" aria-modal="true">
+  <div class="modal mbig" id="donateModal">
+    <button type="button" class="modal-x" id="donateX" aria-label="Close">×</button>
+    <span class="mlabel">Contribute to research</span>
+    <h3>Donate your data</h3>
+
+    <div id="dnIntro">
+      <p class="msub">Your export joins an open, de-identified research cohort. Your name, email, dates and device IDs are stripped on your device and again on our servers before anything is stored. Processing happens on EU-resident infrastructure. You can donate without an account.</p>
+      <ul class="dn-rights">
+        <li>Only physiological signals are kept, identifiers are removed, never uploaded</li>
+        <li>Calendar dates are coarsened to cycle-relative day offsets; age to 5-year bands</li>
+        <li>Lawful basis: your explicit consent (GDPR Art. 6), withdraw any time</li>
+        <li>No sale, no advertising, no third-party sharing (GDPR &amp; CCPA)</li>
+      </ul>
+      <label class="dn-consent">
+        <input type="checkbox" id="dnConsent">
+        <span><b>I consent</b> to donate my de-identified wearable data to Lutea's research cohort under the terms above. I understand it will be pseudonymised and used to improve the reference model.</span>
+      </label>
+      <div class="dn-drop disabled" id="dnDrop">
+        <div class="k">Choose your export to donate</div>
+        <div class="s">CSV from Fitbit, Oura or Garmin · tick consent first</div>
+        <input type="file" id="dnFile" accept=".csv,text/csv" hidden>
+      </div>
+    </div>
+
+    <div id="dnLoad" class="dn-load" hidden></div>
+
+    <div id="dnDone" hidden></div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/ScrollTrigger.min.js"></script>
+<script src="app.js?v=20260719k" id="lutea-app"></script>
+</body>
+</html>

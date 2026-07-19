@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <defs>
+    <radialGradient id="bg" cx="35%" cy="28%" r="90%">
+      <stop offset="0%" stop-color="#151020"/><stop offset="100%" stop-color="#08090d"/>
+    </radialGradient>
+  </defs>
+  <rect width="64" height="64" rx="13" fill="url(#bg)"/>
+  <!-- cycle ring: 12 phase-dots, brightest = today -->
+  <circle cx="32" cy="12" r="8.5" fill="#e0566c" opacity="0.22"/>
+  <circle cx="32" cy="12" r="4.2" fill="#ffffff"/>
+  <circle cx="32" cy="12" r="4.2" fill="none" stroke="#e0566c" stroke-width="1.6"/>
+  <circle cx="42"   cy="14.7" r="3.3" fill="#e9829f" opacity="0.95"/>
+  <circle cx="49.3" cy="22"   r="3.1" fill="#df7aa4" opacity="0.88"/>
+  <circle cx="52"   cy="32"   r="2.9" fill="#d675a9" opacity="0.82"/>
+  <circle cx="49.3" cy="42"   r="2.8" fill="#cc6fae" opacity="0.75"/>
+  <circle cx="42"   cy="49.3" r="2.6" fill="#c36ab3" opacity="0.68"/>
+  <circle cx="32"   cy="52"   r="2.5" fill="#b964b8" opacity="0.60"/>
+  <circle cx="22"   cy="49.3" r="2.4" fill="#b05fbd" opacity="0.52"/>
+  <circle cx="14.7" cy="42"   r="2.3" fill="#a659c2" opacity="0.46"/>
+  <circle cx="12"   cy="32"   r="2.2" fill="#9d54c7" opacity="0.40"/>
+  <circle cx="14.7" cy="22"   r="2.1" fill="#934fcc" opacity="0.34"/>
+  <circle cx="22"   cy="14.7" r="2.0" fill="#8b6ad0" opacity="0.30"/>
+</svg>
