@@ -865,6 +865,28 @@ function renderJournalCal(){
     </button>`;
   }
   grid.innerHTML=html;
+  renderJournalSummary();
+}
+/* on-page summary of what's been logged + a live link to the read-out.
+   Re-runs on every calendar render, so it updates the moment you save/delete. */
+function renderJournalSummary(){
+  const el=document.getElementById('jrSummary'); if(!el) return;
+  const keys=Object.keys(journal);
+  if(!keys.length){
+    el.innerHTML='<span class="jr-sum-hint">Tap a past day to log your first entry — it saves instantly, on this device only.</span>';
+    return;
+  }
+  let period=0, detail=0;
+  for(const k of keys){ const e=journal[k];
+    if(e.period==='yes') period++;
+    if(JR_FIELDS.some(f=>e[f.key]!=null)) detail++; }
+  const ready = !!buildPhaseModel().source;
+  el.innerHTML =
+    `<span class="jr-sum-stat"><b>${keys.length}</b> day${keys.length===1?'':'s'} logged</span>`
+    + `<span class="jr-sum-stat"><b>${period}</b> period</span>`
+    + (detail?`<span class="jr-sum-stat"><b>${detail}</b> with detail</span>`:'')
+    + (ready?'':'<span class="jr-sum-hint">log more of your cycle to sharpen it</span>')
+    + `<span class="jr-sum-link">${ready?'View your read-out':'See your read-out'} →</span>`;
 }
 
 let jrActiveDay=null, jrPeriodVal=null;
@@ -920,6 +942,9 @@ document.getElementById('jrDelete').addEventListener('click',()=>{
 document.getElementById('jrGrid').addEventListener('click',e=>{
   const cell=e.target.closest('.jr-cell'); if(!cell || cell.classList.contains('empty')) return;
   openJournalDay(+cell.dataset.day);
+});
+document.getElementById('jrSummary').addEventListener('click',e=>{
+  if(e.target.closest('.jr-sum-link')){ showPage('insights'); window.scrollTo({top:0,behavior:'smooth'}); }
 });
 document.getElementById('jrPrev').addEventListener('click',()=>{ jrViewMonth--; if(jrViewMonth<0){jrViewMonth=11;jrViewYear--;} renderJournalCal(); });
 document.getElementById('jrNext').addEventListener('click',()=>{ jrViewMonth++; if(jrViewMonth>11){jrViewMonth=0;jrViewYear++;} renderJournalCal(); });
