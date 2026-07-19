@@ -367,7 +367,7 @@ section.stage{padding:96px 0;position:relative;border-top:1px solid var(--line)}
 .jr-nav{background:none;border:1px solid var(--line-2);color:var(--ink-2);width:32px;height:32px;border-radius:50%;
   cursor:pointer;font-size:16px;line-height:1;transition:.2s}
 .jr-nav:hover{border-color:var(--rose);color:#fff}
-.jr-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:6px;width:100%}
+.jr-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:6px;width:100%;grid-template-rows:auto;grid-auto-rows:52px}
 .jr-dow{text-align:center;font-family:var(--cond);font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;
   color:var(--ink-4);padding-bottom:6px}
 .jr-cell{min-height:46px;min-width:0;padding:4px;box-sizing:border-box;border:1px solid var(--line);
@@ -412,6 +412,7 @@ section.stage{padding:96px 0;position:relative;border-top:1px solid var(--line)}
 .jr-opt.sel{background:linear-gradient(120deg,var(--rose),#c23e56);border-color:transparent;color:#fff}
 #jrMoreBtn{margin-top:18px}
 .jr-optional{margin-top:16px;display:flex;flex-direction:column;gap:12px}
+.jr-optional[hidden]{display:none}
 .jr-row{display:flex;align-items:center;justify-content:space-between;gap:14px}
 .jr-row label{font-size:13.5px;color:var(--ink-2);font-weight:300}
 .jr-row label span{color:var(--ink-4);font-size:11.5px;margin-left:4px}
