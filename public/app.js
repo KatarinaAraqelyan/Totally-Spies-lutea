@@ -901,7 +901,9 @@ function openJournalDay(day){
   for(const f of JR_FIELDS) document.getElementById(f.id).value = entry[f.key]!=null ? entry[f.key] : '';
   const hasDetail = JR_FIELDS.some(f=>entry[f.key]!=null);
   document.getElementById('jrOptional').hidden = !hasDetail;
-  document.getElementById('jrMoreBtn').textContent = hasDetail ? '– Hide optional details' : '+ Add optional details (heart rate, sleep, temperature…)';
+  const moreBtn=document.getElementById('jrMoreBtn');
+  moreBtn.classList.toggle('open', hasDetail);
+  moreBtn.setAttribute('aria-expanded', hasDetail);
   document.getElementById('jrDelete').hidden = !journal[day];
   document.getElementById('jrHint').textContent='';
   jVeil.classList.add('open');
@@ -916,7 +918,9 @@ document.getElementById('jrPeriodToggle').addEventListener('click',e=>{
 document.getElementById('jrMoreBtn').addEventListener('click',()=>{
   const box=document.getElementById('jrOptional'); const willOpen=box.hidden;
   box.hidden=!willOpen;
-  document.getElementById('jrMoreBtn').textContent = willOpen ? '– Hide optional details' : '+ Add optional details (heart rate, sleep, temperature…)';
+  const moreBtn=document.getElementById('jrMoreBtn');
+  moreBtn.classList.toggle('open', willOpen);
+  moreBtn.setAttribute('aria-expanded', willOpen);
 });
 document.getElementById('jrSave').addEventListener('click',()=>{
   if(!jrPeriodVal){ document.getElementById('jrHint').textContent='Please mark whether this was a period day, it’s the one thing we need.'; return; }
