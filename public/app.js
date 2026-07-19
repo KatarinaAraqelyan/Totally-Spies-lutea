@@ -726,6 +726,46 @@ document.getElementById('riskWrap').addEventListener('click',e=>{
     {enableHighAccuracy:false,timeout:10000,maximumAge:600000});
 });
 
+/* ---------- 7c. CONVERGENCE BENCHMARK CHART (API page) -----
+   Renders docs/benchmark/cohort-convergence-results.json (served as
+   /benchmark-results.json): learned cohort percentiles converging to the
+   NHANES reference vs n. Proof that "the cohort learns" is a measured fact. */
+function renderBenchmark(){
+  const box=document.getElementById('benchmarkChart'); if(!box) return;
+  fetch('/benchmark-results.json').then(r=>r.json()).then(R=>{
+    const pts=R.pooled; if(!pts||pts.length<2){ box.innerHTML='<div class="bench-empty">No benchmark data.</div>'; return; }
+    const h=R.headline, thr=R.supersede_threshold;
+    const W=320,H=140,pL=8,pR=8,pT=10,pB=22;
+    const ns=pts.map(p=>p.n), maes=pts.map(p=>p.mae);
+    const lx=Math.log(ns[0]), hx=Math.log(ns[ns.length-1]);
+    const ymax=Math.max(...maes)*1.06||1;
+    const X=n=>pL+(Math.log(n)-lx)/(hx-lx)*(W-pL-pR);
+    const Y=m=>pT+(1-m/ymax)*(H-pT-pB);
+    const line=pts.map(p=>`${X(p.n).toFixed(1)},${Y(p.mae).toFixed(1)}`).join(' ');
+    const dots=pts.map(p=>`<circle cx="${X(p.n).toFixed(1)}" cy="${Y(p.mae).toFixed(1)}" r="2.2" class="bench-dot"/>`).join('');
+    const mx=X(thr).toFixed(1);
+    const ticks=[ns[0],thr,500,ns[ns.length-1]].filter((v,i,a)=>a.indexOf(v)===i&&v>=ns[0]&&v<=ns[ns.length-1]);
+    const xax=ticks.map(n=>`<text x="${X(n).toFixed(1)}" y="${H-6}" text-anchor="middle" class="bench-axtx">${n>=1000?(n/1000)+'k':n}</text>`).join('');
+    const stat=(n,mae,lab)=>`<div class="bench-stat"><div class="bs-n">${mae.toFixed(2)}<small> bpm</small></div><div class="bs-l">${lab} · n=${n>=1000?(n/1000)+'k':n}</div></div>`;
+    box.innerHTML=`
+      <div class="bench-stats">
+        ${stat(h.cold_start.n,h.cold_start.mae,'cold start')}
+        ${stat(h.at_supersede.n,h.at_supersede.mae,'supersede')}
+        ${stat(h.warm.n,h.warm.mae,'warm')}
+      </div>
+      <svg viewBox="0 0 ${W} ${H}" class="bench-svg" preserveAspectRatio="none" aria-label="Learned-vs-NHANES error decreasing as donations grow">
+        <line x1="${pL}" y1="${(H-pB).toFixed(1)}" x2="${W-pR}" y2="${(H-pB).toFixed(1)}" class="bench-grid"/>
+        <line x1="${mx}" y1="${pT}" x2="${mx}" y2="${(H-pB).toFixed(1)}" class="bench-mark"/>
+        <text x="${mx}" y="${pT+8}" text-anchor="${thr===ns[0]?'start':'middle'}" class="bench-marktx">supersede n≥${thr}</text>
+        <text x="${pL}" y="${pT+3}" class="bench-axtx">${ymax.toFixed(1)}</text>
+        <text x="${pL}" y="${(H-pB-2).toFixed(1)}" class="bench-axtx">0</text>
+        <polyline points="${line}" class="bench-line"/>
+        ${dots}${xax}
+      </svg>
+      <div class="bench-cap">MAE(|learned − NHANES|) in bpm vs samples per band · ${h.error_reduction_pct}% lower from cold start to warm</div>`;
+  }).catch(()=>{ box.innerHTML='<div class="bench-empty">Run <code>node docs/benchmark/cohort_convergence.js</code> to generate results.</div>'; });
+}
+
 /* ---------- 8. PIPELINE DRIVER ----------------------------- */
 function recompute(){
   renderSignals(); renderConfidence(); renderCycle(); renderInsights(); renderRisk();
@@ -1001,5 +1041,6 @@ addEventListener('keydown',e=>{ if(e.key==='Escape'){ veil.classList.remove('ope
    so the user sees exactly what will light up */
 renderSignals();
 refreshCohort();
+renderBenchmark();
 
 })();

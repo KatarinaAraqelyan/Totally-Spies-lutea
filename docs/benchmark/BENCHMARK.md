@@ -1,5 +1,10 @@
 # Lutea Cycle-Phase Benchmark
 
+> This folder holds two benchmarks: **(1)** this one — cycle-phase classification
+> (a prediction task) — and **(2)** [cohort-learning convergence](COHORT-CONVERGENCE.md),
+> which validates that the shared reference cohort learns correctly. Both are
+> reproducible and run the same production code they measure.
+
 A small, fully reproducible benchmark for **menstrual cycle-phase classification from
 consumer-wearable signals** — the core task Lutea performs. It ships as a reusable
 scientific asset: a labeled dataset, a documented split protocol, an evaluation metric,
