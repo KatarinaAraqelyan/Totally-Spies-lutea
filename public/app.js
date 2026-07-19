@@ -742,10 +742,11 @@ function renderBenchmark(){
     const X=n=>pL+(Math.log(n)-lx)/(hx-lx)*(W-pL-pR);
     const Y=m=>pT+(1-m/ymax)*(H-pT-pB);
     const line=pts.map(p=>`${X(p.n).toFixed(1)},${Y(p.mae).toFixed(1)}`).join(' ');
-    const dots=pts.map(p=>`<circle cx="${X(p.n).toFixed(1)}" cy="${Y(p.mae).toFixed(1)}" r="2.2" class="bench-dot"/>`).join('');
     const mx=X(thr).toFixed(1);
+    const xPct=n=>(X(n)/W*100).toFixed(2);
+    const yPct=m=>(Y(m)/H*100).toFixed(2);
     const ticks=[ns[0],thr,500,ns[ns.length-1]].filter((v,i,a)=>a.indexOf(v)===i&&v>=ns[0]&&v<=ns[ns.length-1]);
-    const xax=ticks.map(n=>`<text x="${X(n).toFixed(1)}" y="${H-6}" text-anchor="middle" class="bench-axtx">${n>=1000?(n/1000)+'k':n}</text>`).join('');
+    const xlab=ticks.map(n=>`<span class="bench-lab" style="left:${xPct(n)}%;top:${((H-pB+9)/H*100).toFixed(2)}%;transform:translateX(-50%)">${n>=1000?(n/1000)+'k':n}</span>`).join('');
     const stat=(n,mae,lab)=>`<div class="bench-stat"><div class="bs-n">${mae.toFixed(2)}<small> bpm off</small></div><div class="bs-l">${lab} · ${n>=1000?(n/1000)+'k':n} people/band</div></div>`;
     box.innerHTML=`
       <div class="bench-stats">
@@ -757,14 +758,13 @@ function renderBenchmark(){
       <svg viewBox="0 0 ${W} ${H}" class="bench-svg" preserveAspectRatio="none" aria-label="Learned-vs-NHANES error decreasing as donations grow">
         <line x1="${pL}" y1="${(H-pB).toFixed(1)}" x2="${W-pR}" y2="${(H-pB).toFixed(1)}" class="bench-grid"/>
         <line x1="${mx}" y1="${pT}" x2="${mx}" y2="${(H-pB).toFixed(1)}" class="bench-mark"/>
-        <text x="${mx}" y="${pT+8}" text-anchor="${thr===ns[0]?'start':'middle'}" class="bench-marktx">starts trusting itself · ${thr}+</text>
-        <text x="${pL}" y="${pT+3}" class="bench-axtx">${ymax.toFixed(1)}</text>
-        <text x="${pL}" y="${(H-pB-2).toFixed(1)}" class="bench-axtx">0</text>
         <polyline points="${line}" class="bench-line"/>
-        ${dots}
-        <circle class="bench-hoverdot" r="3.5" style="display:none"/>
-        ${xax}
+        <circle class="bench-hoverdot" r="3" style="display:none"/>
       </svg>
+      <span class="bench-lab" style="left:${(pL/W*100).toFixed(2)}%;top:${yPct(ymax)}%;transform:translateY(-50%)">${ymax.toFixed(1)}</span>
+      <span class="bench-lab" style="left:${(pL/W*100).toFixed(2)}%;top:${yPct(0)}%;transform:translateY(-50%)">0</span>
+      <span class="bench-mklab" style="left:${xPct(thr)}%;top:${(pT/H*100).toFixed(2)}%">starts trusting itself · ${thr}+</span>
+      ${xlab}
       <div class="bench-tip" hidden></div>
       </div>
       <div class="bench-cap">How far the app's learned numbers sit from trusted medical data (heart-beats per minute), as more people share — <b>${h.error_reduction_pct}% closer</b> once warmed up. Hover for any point.</div>`;
