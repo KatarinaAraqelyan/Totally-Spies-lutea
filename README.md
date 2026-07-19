@@ -6,6 +6,8 @@ the hormonal patterns hiding in the data, and flags what is worth checking with 
 
 Live: **[lutea.administration.ae](https://lutea.administration.ae)** · Built for Hack-Nation Challenge 05 (Women's Hormonal Health).
 
+_Test branch: verifying multi-branch workflow._
+
 > Not medical advice. Lutea reads consumer wearable data and cannot diagnose. Percentages are pattern-match strengths, not disease probabilities.
 
 ## What it does
