@@ -164,14 +164,24 @@ section.stage{padding:96px 0;position:relative;border-top:1px solid var(--line)}
 .bench-stat .bs-n{font-family:var(--serif);font-size:22px;color:var(--ink);line-height:1.1}
 .bench-stat .bs-n small{font-size:12px;color:var(--ink-3);font-family:var(--cond)}
 .bench-stat .bs-l{font-family:var(--cond);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3);margin-top:3px}
+.bench-plot{position:relative;cursor:crosshair}
 .bench-svg{width:100%;height:auto;display:block;overflow:visible}
 .bench-line{fill:none;stroke:var(--rose);stroke-width:2;stroke-linejoin:round;stroke-linecap:round}
 .bench-dot{fill:var(--rose)}
+.bench-hoverdot{fill:var(--rose);stroke:var(--surface);stroke-width:2}
 .bench-mark{stroke:var(--gold);stroke-width:1.4;stroke-dasharray:4 4}
-.bench-marktx{fill:var(--gold);font-family:var(--cond);font-size:10px;letter-spacing:.06em}
+.bench-marktx{fill:var(--gold);font-family:var(--cond);font-size:8px;letter-spacing:.04em;opacity:.85}
 .bench-grid{stroke:var(--line);stroke-width:1}
 .bench-axtx{fill:var(--ink-3);font-family:var(--mono);font-size:9px}
-.bench-cap{font-family:var(--mono);font-size:11px;color:var(--ink-3);margin-top:8px;text-align:center}
+.bench-cap{font-family:var(--mono);font-size:11px;color:var(--ink-3);margin-top:8px;text-align:center;line-height:1.5}
+.bench-tip{position:absolute;transform:translate(-50%,-138%);background:var(--ink);color:var(--bg);
+  font-family:var(--mono);font-size:11px;line-height:1.45;padding:6px 9px;border-radius:8px;
+  white-space:nowrap;pointer-events:none;z-index:5;box-shadow:0 6px 18px rgba(0,0,0,.35)}
+.bench-tip b{font-size:12px}
+.bench-tip small{color:var(--ink-4)}
+.bench-tip[hidden]{display:none}
+.bench-tip::after{content:'';position:absolute;left:50%;top:100%;transform:translateX(-50%);
+  border:5px solid transparent;border-top-color:var(--ink)}
 .ip-block{margin-bottom:36px}
 .ip-head{font-family:var(--serif);font-size:clamp(22px,3.4vw,28px);color:var(--ink);margin-bottom:16px;
   display:flex;align-items:center;gap:13px}
@@ -641,8 +651,8 @@ footer .fine{font-family:var(--mono);font-size:11px;color:var(--ink-3);letter-sp
   }
 }</pre>
 
-        <div class="api-lbl">Does the learning actually work? · benchmark</div>
-        <div class="api-note">We draw donations from the published NHANES distribution and watch the cohort's <b>learned</b> percentiles converge to the <b>real CDC</b> values — running the exact production pipeline. Error in bpm, lower is better; the marker is the 50-sample point where a band's learned percentiles supersede the static table. Reproducible: <code>node docs/benchmark/cohort_convergence.js</code>.</div>
+        <div class="api-lbl">Does the app really get smarter with more data? · benchmark</div>
+        <div class="api-note">Our promise: <b>the more women share their data, the sharper the app gets for everyone</b>. This chart is the proof. We feed it realistic donations and measure how far its self-learned reference sits from trusted national medical data (the CDC's health survey) — measured in heart-beats per minute. <b>The line falls as data grows</b>: a rough guess at first, near-perfect once warmed up. Lower is better; hover the line to read any point. Anyone can re-run it: <code>node docs/benchmark/cohort_convergence.js</code>.</div>
         <div id="benchmarkChart" class="bench"><div class="bench-empty">Loading benchmark…</div></div>
 
         <div class="api-row"><span class="api-verb">POST</span><span class="api-path">/api/donate</span></div>

@@ -746,23 +746,53 @@ function renderBenchmark(){
     const mx=X(thr).toFixed(1);
     const ticks=[ns[0],thr,500,ns[ns.length-1]].filter((v,i,a)=>a.indexOf(v)===i&&v>=ns[0]&&v<=ns[ns.length-1]);
     const xax=ticks.map(n=>`<text x="${X(n).toFixed(1)}" y="${H-6}" text-anchor="middle" class="bench-axtx">${n>=1000?(n/1000)+'k':n}</text>`).join('');
-    const stat=(n,mae,lab)=>`<div class="bench-stat"><div class="bs-n">${mae.toFixed(2)}<small> bpm</small></div><div class="bs-l">${lab} · n=${n>=1000?(n/1000)+'k':n}</div></div>`;
+    const stat=(n,mae,lab)=>`<div class="bench-stat"><div class="bs-n">${mae.toFixed(2)}<small> bpm off</small></div><div class="bs-l">${lab} · ${n>=1000?(n/1000)+'k':n} people/band</div></div>`;
     box.innerHTML=`
       <div class="bench-stats">
-        ${stat(h.cold_start.n,h.cold_start.mae,'cold start')}
-        ${stat(h.at_supersede.n,h.at_supersede.mae,'supersede')}
-        ${stat(h.warm.n,h.warm.mae,'warm')}
+        ${stat(h.cold_start.n,h.cold_start.mae,'barely any data')}
+        ${stat(h.at_supersede.n,h.at_supersede.mae,'switch-over point')}
+        ${stat(h.warm.n,h.warm.mae,'fully warmed up')}
       </div>
+      <div class="bench-plot">
       <svg viewBox="0 0 ${W} ${H}" class="bench-svg" preserveAspectRatio="none" aria-label="Learned-vs-NHANES error decreasing as donations grow">
         <line x1="${pL}" y1="${(H-pB).toFixed(1)}" x2="${W-pR}" y2="${(H-pB).toFixed(1)}" class="bench-grid"/>
         <line x1="${mx}" y1="${pT}" x2="${mx}" y2="${(H-pB).toFixed(1)}" class="bench-mark"/>
-        <text x="${mx}" y="${pT+8}" text-anchor="${thr===ns[0]?'start':'middle'}" class="bench-marktx">supersede n≥${thr}</text>
+        <text x="${mx}" y="${pT+8}" text-anchor="${thr===ns[0]?'start':'middle'}" class="bench-marktx">starts trusting itself · ${thr}+</text>
         <text x="${pL}" y="${pT+3}" class="bench-axtx">${ymax.toFixed(1)}</text>
         <text x="${pL}" y="${(H-pB-2).toFixed(1)}" class="bench-axtx">0</text>
         <polyline points="${line}" class="bench-line"/>
-        ${dots}${xax}
+        ${dots}
+        <circle class="bench-hoverdot" r="3.5" style="display:none"/>
+        ${xax}
       </svg>
-      <div class="bench-cap">MAE(|learned − NHANES|) in bpm vs samples per band · ${h.error_reduction_pct}% lower from cold start to warm</div>`;
+      <div class="bench-tip" hidden></div>
+      </div>
+      <div class="bench-cap">How far the app's learned numbers sit from trusted medical data (heart-beats per minute), as more people share — <b>${h.error_reduction_pct}% closer</b> once warmed up. Hover for any point.</div>`;
+
+    // hover: show the value under the cursor
+    const plot=box.querySelector('.bench-plot');
+    const svg=box.querySelector('.bench-svg');
+    const tip=box.querySelector('.bench-tip');
+    const hdot=box.querySelector('.bench-hoverdot');
+    const at=cx=>{
+      const rect=svg.getBoundingClientRect();
+      const sx=rect.width/W, sy=rect.height/H;
+      const vx=(cx-rect.left)/sx;
+      let best=pts[0],bd=Infinity;
+      for(const p of pts){ const d=Math.abs(X(p.n)-vx); if(d<bd){bd=d;best=p;} }
+      hdot.setAttribute('cx',X(best.n).toFixed(1));
+      hdot.setAttribute('cy',Y(best.mae).toFixed(1));
+      hdot.style.display='';
+      tip.innerHTML=`<b>${best.mae.toFixed(2)} bpm</b> off<br><small>${best.n>=1000?(best.n/1000)+'k':best.n} people per age band</small>`;
+      tip.style.left=(X(best.n)*sx).toFixed(1)+'px';
+      tip.style.top=(Y(best.mae)*sy).toFixed(1)+'px';
+      tip.hidden=false;
+    };
+    const hide=()=>{ tip.hidden=true; hdot.style.display='none'; };
+    plot.addEventListener('mousemove',e=>at(e.clientX));
+    plot.addEventListener('mouseleave',hide);
+    plot.addEventListener('touchstart',e=>at(e.touches[0].clientX),{passive:true});
+    plot.addEventListener('touchmove',e=>at(e.touches[0].clientX),{passive:true});
   }).catch(()=>{ box.innerHTML='<div class="bench-empty">Run <code>node docs/benchmark/cohort_convergence.js</code> to generate results.</div>'; });
 }
 
