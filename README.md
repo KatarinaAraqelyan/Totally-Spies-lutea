@@ -57,6 +57,21 @@ quantitative RHR reference (baked in and cited) and **mcPHASES** as the input-sc
 Full dataset manifest, preprocessing and evaluation choices, and the file inventory:
 **[`docs/DATA.md`](docs/DATA.md)**.
 
+## Benchmarks
+
+Two small, fully reproducible benchmarks live in **[`docs/benchmark/`](docs/benchmark/)**.
+Each runs the *exact production code* it measures — no separate reimplementation — so the
+numbers reflect what the app actually does. Zero dependencies; reproduce with plain `node`.
+
+| Benchmark | Question it answers | Headline result | Reproduce |
+|---|---|---|---|
+| **[Cycle-phase classification](docs/benchmark/BENCHMARK.md)** | Does phase detection work? Predict Luteal vs Follicular per day from temperature, phase label held out. | **97.7%** leave-one-cycle-out accuracy (88 labeled days, demonstration scope) | `node docs/benchmark/evaluate.js` |
+| **[Cohort-learning convergence](docs/benchmark/COHORT-CONVERGENCE.md)** | Does the shared cohort learn correctly? Feed NHANES-drawn donations through the real `sanitize → updateAgg → buildCohort` pipeline. | Learned RHR percentiles converge to CDC reference: **MAE 6.84 → 0.17 bpm** (97.5% reduction) | `node docs/benchmark/cohort_convergence.js` |
+
+Both ship a labeled dataset / documented protocol and a runnable harness that generalises to
+larger corpora (e.g. mcPHASES) unchanged. The convergence benchmark is also visualised
+live in-app.
+
 ## Repository layout
 
 | Path | What it is |
@@ -65,6 +80,7 @@ Full dataset manifest, preprocessing and evaluation choices, and the file invent
 | `public/lutea-test-sample.csv` | Synthetic 88-day sample export to try the pipeline. |
 | `api/server.js` | Donation + cohort-learning + facility-lookup backend. |
 | `nginx.conf`, `docker-compose.yml` | Serving, rate-limiting, deployment. |
+| `docs/benchmark/` | Two reproducible benchmarks: dataset, protocol, and eval harnesses. |
 | `docs/` | Data manifest, cited scientific grounding, challenge brief. |
 
 ## License
