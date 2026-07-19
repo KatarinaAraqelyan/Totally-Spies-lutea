@@ -69,4 +69,11 @@ Full dataset manifest, preprocessing and evaluation choices, and the file invent
 
 ## License
 
-Open for research use. Built as a reusable contribution to open women's-health infrastructure.
+**MIT License** — see [`LICENSE`](LICENSE). The code, the NHANES-derived reference
+table, the input schema, and the API are free to use, modify, and redistribute
+(including commercially), so the work can be reused and built on after the hackathon.
+
+Two clarifications, not licence restrictions:
+- **Not medical advice.** Lutea reads consumer wearable data and cannot diagnose.
+- **Third-party data keeps its own terms.** We do not re-host NHANES or mcPHASES;
+  we link to the sources, which stay under their original CDC / PhysioNet terms.
