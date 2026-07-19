@@ -335,6 +335,56 @@ section.stage{padding:96px 0;position:relative;border-top:1px solid var(--line)}
   cursor:pointer;border-bottom:1px solid var(--line-2);padding:2px 0;transition:.25s}
 .methodsbtn:hover{color:var(--rose-2);border-color:var(--rose)}
 
+/* ── period journal (manual calendar entry) ────── */
+.jr-cal{border:1px solid var(--line);background:var(--surface);border-radius:6px;padding:22px 24px;max-width:520px}
+.jr-cal-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+.jr-month{font-family:var(--serif);font-size:20px;color:var(--ink)}
+.jr-nav{background:none;border:1px solid var(--line-2);color:var(--ink-2);width:32px;height:32px;border-radius:50%;
+  cursor:pointer;font-size:16px;line-height:1;transition:.2s}
+.jr-nav:hover{border-color:var(--rose);color:#fff}
+.jr-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
+.jr-dow{text-align:center;font-family:var(--cond);font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;
+  color:var(--ink-4);padding-bottom:6px}
+.jr-cell{aspect-ratio:1;border:1px solid var(--line);background:var(--bg-2);border-radius:4px;cursor:pointer;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;color:var(--ink-2);
+  font-family:var(--mono);font-size:12.5px;transition:.2s;position:relative}
+.jr-cell:hover{border-color:var(--rose);color:#fff}
+.jr-cell.empty{border-color:transparent;background:transparent;cursor:default}
+.jr-cell.today{border-color:var(--line-3)}
+.jr-cell.has{color:var(--ink)}
+.jr-cell .jr-dot{width:5px;height:5px;border-radius:50%}
+.jr-cell .jr-dot.period{background:var(--rose)}
+.jr-cell .jr-dot.detail{background:var(--mint)}
+.jr-legend{display:flex;gap:18px;margin-top:16px}
+.jr-lg{font-family:var(--cond);font-size:11px;letter-spacing:.05em;color:var(--ink-2);display:inline-flex;gap:7px;align-items:center}
+.jr-lg .jr-dot{width:8px;height:8px;border-radius:50%;display:inline-block}
+.jr-lg .jr-dot.period{background:var(--rose)}
+.jr-lg .jr-dot.detail{background:var(--mint)}
+
+.jr-field{margin:18px 0 4px}
+.jr-lbl{font-family:var(--cond);font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-2);display:block;margin-bottom:9px}
+.req-star{color:var(--rose-2)}
+.jr-toggle{display:flex;gap:10px}
+.jr-opt{flex:1;font-family:var(--cond);font-size:13px;letter-spacing:.08em;text-transform:uppercase;
+  padding:11px 14px;border:1px solid var(--line-2);background:transparent;color:var(--ink-2);cursor:pointer;
+  border-radius:4px;transition:.2s}
+.jr-opt:hover{border-color:var(--rose)}
+.jr-opt.sel{background:linear-gradient(120deg,var(--rose),#c23e56);border-color:transparent;color:#fff}
+#jrMoreBtn{margin-top:18px}
+.jr-optional{margin-top:16px;display:flex;flex-direction:column;gap:12px}
+.jr-row{display:flex;align-items:center;justify-content:space-between;gap:14px}
+.jr-row label{font-size:13.5px;color:var(--ink-2);font-weight:300}
+.jr-row label span{color:var(--ink-4);font-size:11.5px;margin-left:4px}
+.jr-row input{width:110px;font-family:var(--mono);font-size:13px;color:var(--ink);background:var(--bg-2);
+  border:1px solid var(--line-2);border-radius:3px;padding:7px 9px;text-align:right}
+.jr-row input:focus{outline:none;border-color:var(--rose)}
+.jr-hint{color:var(--amber);font-size:12.5px;font-weight:300;min-height:1.4em;margin-top:14px}
+.jr-actions{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-top:6px}
+@media(max-width:640px){
+  .jr-cal{padding:16px 14px;max-width:100%}
+  .jr-row input{width:90px}
+}
+
 /* featured card, resting heart rate, the primary metric */
 .sig.featured{grid-column:1/-1;padding:20px 22px;opacity:.85;border-color:rgba(224,86,108,.45);
   background:linear-gradient(135deg,rgba(224,86,108,.08),var(--surface) 55%)}
@@ -521,9 +571,10 @@ footer .fine{font-family:var(--mono);font-size:11px;color:var(--ink-3);letter-sp
   <div class="brand"><span class="dot"></span><span class="name">Lutea</span></div>
   <nav class="nav" id="nav">
     <button type="button" class="navlink active" data-page="home">Home</button>
-    <button type="button" class="navlink" data-page="raw">Raw data</button>
-    <button type="button" class="navlink" data-page="insights">Practical insights</button>
+    <button type="button" class="navlink" data-page="raw">Your data</button>
+    <button type="button" class="navlink" data-page="insights">Your insights</button>
     <button type="button" class="navlink" data-page="api">API</button>
+    <button type="button" class="navlink" data-page="journal" title="Log your period by hand, no wearable needed">Journal</button>
   </nav>
 </div>
 
@@ -550,7 +601,7 @@ footer .fine{font-family:var(--mono);font-size:11px;color:var(--ink-3);letter-sp
       <div class="drop" id="drop">
         <div class="ico">↑</div>
         <div class="big">Drop your export here</div>
-        <div class="small">or click to browse · .csv · multiple files welcome</div>
+        <div class="small">or click to browse · CSV files · drop as many as you like</div>
         <div class="sources">
           <span class="src-chip"><b>Fitbit</b> · Takeout</span>
           <span class="src-chip"><b>Oura</b> · trends export</span>
@@ -598,7 +649,7 @@ footer .fine{font-family:var(--mono);font-size:11px;color:var(--ink-3);letter-sp
     <div class="wrap">
       <div class="ip-block">
         <div class="ip-head">API</div>
-        <p class="sdesc">An open research API, no key, no account. The analysis runs on your own device; the API exists only to <b>grow and share the open reference cohort</b>. Two endpoints, that's the whole surface.</p>
+        <p class="sdesc">No key, no account needed. Your own read-out always happens on your device — this API exists only to <b>grow and share the open reference data</b> everyone gets compared against. Two endpoints, that's the whole surface.</p>
 
         <div class="donate-cta">
           <div>
@@ -659,6 +710,29 @@ footer .fine{font-family:var(--mono);font-size:11px;color:var(--ink-3);letter-sp
           <tr><td>consent</td><td>must be <code>true</code>, GDPR lawful basis<span class="req">required</span></td></tr>
         </table>
         <p class="notmed">Rate-limited and size-capped to protect the service. Dates are coarsened to relative day offsets and age to 5-year bands before anything is stored; any field shaped like a personal identifier is rejected. Analysis itself needs no API call, it runs entirely in your browser.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- PAGE · JOURNAL -->
+  <section class="page pad" id="page-journal">
+    <div class="wrap">
+      <div class="ip-block">
+        <div class="ip-head">Period journal</div>
+        <p class="sdesc">No wearable? No problem. Tap a day to log it by hand. Marking whether it was a period day is the only thing we need — everything else is optional context that sharpens your read-out.</p>
+        <div class="jr-cal" id="jrCal">
+          <div class="jr-cal-head">
+            <button type="button" class="jr-nav" id="jrPrev" aria-label="Previous month">‹</button>
+            <span class="jr-month" id="jrMonthLbl"></span>
+            <button type="button" class="jr-nav" id="jrNext" aria-label="Next month">›</button>
+          </div>
+          <div class="jr-grid" id="jrGrid"></div>
+          <div class="jr-legend">
+            <span class="jr-lg"><i class="jr-dot period"></i>Period day</span>
+            <span class="jr-lg"><i class="jr-dot detail"></i>Extra detail logged</span>
+          </div>
+        </div>
+        <p class="notmed">Saved on this device only (your browser's local storage), nothing is uploaded unless you choose to donate it from the API tab.</p>
       </div>
     </div>
   </section>
@@ -812,6 +886,39 @@ Menopause transition      =  STRAW+10 cycle staging (see below), age-adjusted</s
     <div id="dnLoad" class="dn-load" hidden></div>
 
     <div id="dnDone" hidden></div>
+  </div>
+</div>
+
+<div class="modal-veil" id="journalVeil" role="dialog" aria-modal="true">
+  <div class="modal" id="journalModal">
+    <button type="button" class="modal-x" id="journalX" aria-label="Close">×</button>
+    <span class="mlabel">Journal entry</span>
+    <h3 id="jrDate"></h3>
+
+    <div class="jr-field">
+      <label class="jr-lbl">Period day <span class="req-star">*</span></label>
+      <div class="jr-toggle" id="jrPeriodToggle">
+        <button type="button" class="jr-opt" data-val="yes">Yes</button>
+        <button type="button" class="jr-opt" data-val="no">No</button>
+      </div>
+    </div>
+
+    <button type="button" class="methodsbtn" id="jrMoreBtn">+ Add optional details (heart rate, sleep, temperature…)</button>
+    <div class="jr-optional" id="jrOptional" hidden>
+      <div class="jr-row"><label for="jrRhr">Resting heart rate <span>bpm</span></label><input type="number" id="jrRhr" step="1" min="30" max="220"></div>
+      <div class="jr-row"><label for="jrHrv">Heart-rate variability <span>ms</span></label><input type="number" id="jrHrv" step="0.1" min="0" max="300"></div>
+      <div class="jr-row"><label for="jrTemp">Skin temperature <span>°C</span></label><input type="number" id="jrTemp" step="0.01" min="30" max="42"></div>
+      <div class="jr-row"><label for="jrSleep">Sleep efficiency <span>%</span></label><input type="number" id="jrSleep" step="0.1" min="0" max="100"></div>
+      <div class="jr-row"><label for="jrResp">Respiratory rate <span>br/min</span></label><input type="number" id="jrResp" step="0.1" min="4" max="40"></div>
+      <div class="jr-row"><label for="jrSpo2">Blood oxygen <span>%</span></label><input type="number" id="jrSpo2" step="0.1" min="50" max="100"></div>
+      <div class="jr-row"><label for="jrSteps">Steps <span>count</span></label><input type="number" id="jrSteps" step="1" min="0" max="100000"></div>
+    </div>
+
+    <p class="jr-hint" id="jrHint"></p>
+    <div class="jr-actions">
+      <button type="button" class="btn ghost" id="jrDelete" hidden>Delete entry</button>
+      <button type="button" class="btn primary" id="jrSave">Save entry</button>
+    </div>
   </div>
 </div>
 

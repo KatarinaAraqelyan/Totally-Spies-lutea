@@ -734,6 +734,126 @@ function recompute(){
 function resetStore(){ SIGNALS.forEach(s=>store[s.key].clear()); phaseByDay.clear(); fileCount=0;
   document.getElementById('filelist').innerHTML=''; }
 
+/* ---------- 8b. PERIOD JOURNAL (manual calendar entry) -----
+   Lets someone without a wearable export log a day by hand. Marking a
+   period day is the only requirement; other signals are optional and
+   feed the very same `store`/`phaseByDay` the CSV pipeline uses, so a
+   hand-logged cycle drives the same insights and screening above.
+   Persisted client-side only (localStorage), never uploaded on its own. */
+const JOURNAL_KEY = 'lutea_journal_v1';
+const JR_FIELDS = [
+  {key:'rhr',   id:'jrRhr'},
+  {key:'hrv',   id:'jrHrv'},
+  {key:'temp',  id:'jrTemp'},
+  {key:'sleep', id:'jrSleep'},
+  {key:'resp',  id:'jrResp'},
+  {key:'spo2',  id:'jrSpo2'},
+  {key:'steps', id:'jrSteps'},
+];
+function loadJournal(){ try{ return JSON.parse(localStorage.getItem(JOURNAL_KEY)||'{}'); }catch(e){ return {}; } }
+function saveJournal(){ localStorage.setItem(JOURNAL_KEY, JSON.stringify(journal)); }
+const journal = loadJournal();   // {dayIndex: {period:'yes'|'no', rhr,hrv,temp,sleep,resp,spo2,steps}}
+
+function addSample(key, day, val){ const m=store[key]; const rec=m.get(day)||{sum:0,n:0}; rec.sum+=val; rec.n++; m.set(day,rec); }
+function removeSample(key, day, val){ const m=store[key]; const rec=m.get(day); if(!rec) return;
+  rec.sum-=val; rec.n--; if(rec.n<=0) m.delete(day); else m.set(day,rec); }
+function applyJournalEntry(day, entry){
+  for(const f of JR_FIELDS) if(entry[f.key]!=null) addSample(f.key, day, entry[f.key]);
+  if(entry.period==='yes') phaseByDay.set(day, 'Menstrual');
+}
+function unapplyJournalEntry(day){
+  const old = journal[day]; if(!old) return;
+  for(const f of JR_FIELDS) if(old[f.key]!=null) removeSample(f.key, day, old[f.key]);
+  if(old.period==='yes') phaseByDay.delete(day);
+}
+for(const d in journal) applyJournalEntry(+d, journal[d]);   // replay saved entries into the store on load
+
+function dayIndexFromYMD(y,m,d){ return Math.floor(Date.UTC(y,m,d)/86400000); }
+function ymdFromDayIndex(day){ const dt=new Date(day*86400000); return {y:dt.getUTCFullYear(), m:dt.getUTCMonth(), d:dt.getUTCDate()}; }
+
+let jrViewYear=null, jrViewMonth=null;
+function renderJournalCal(){
+  const grid=document.getElementById('jrGrid'); if(!grid) return;
+  const today=new Date();
+  if(jrViewYear==null){ jrViewYear=today.getUTCFullYear(); jrViewMonth=today.getUTCMonth(); }
+  const first=new Date(Date.UTC(jrViewYear,jrViewMonth,1));
+  const startWd=first.getUTCDay();
+  const daysInMonth=new Date(Date.UTC(jrViewYear,jrViewMonth+1,0)).getUTCDate();
+  document.getElementById('jrMonthLbl').textContent=first.toLocaleDateString('en-US',{month:'long',year:'numeric',timeZone:'UTC'});
+  const todayIdx=dayIndexFromYMD(today.getUTCFullYear(),today.getUTCMonth(),today.getUTCDate());
+  let html='';
+  ['S','M','T','W','T','F','S'].forEach(d=>html+=`<div class="jr-dow">${d}</div>`);
+  for(let i=0;i<startWd;i++) html+='<div class="jr-cell empty"></div>';
+  for(let d=1; d<=daysInMonth; d++){
+    const day=dayIndexFromYMD(jrViewYear,jrViewMonth,d);
+    const entry=journal[day];
+    const isPeriod = entry && entry.period==='yes';
+    const hasDetail = entry && JR_FIELDS.some(f=>entry[f.key]!=null);
+    html+=`<button type="button" class="jr-cell${day===todayIdx?' today':''}${entry?' has':''}" data-day="${day}">
+      <span class="jr-daynum">${d}</span>
+      ${isPeriod?'<i class="jr-dot period"></i>':''}${hasDetail?'<i class="jr-dot detail"></i>':''}
+    </button>`;
+  }
+  grid.innerHTML=html;
+}
+
+let jrActiveDay=null, jrPeriodVal=null;
+const jVeil=document.getElementById('journalVeil');
+function openJournalDay(day){
+  jrActiveDay=day;
+  const entry=journal[day]||{};
+  jrPeriodVal=entry.period||null;
+  const {y,m,d}=ymdFromDayIndex(day);
+  document.getElementById('jrDate').textContent=new Date(Date.UTC(y,m,d)).toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric',timeZone:'UTC'});
+  document.querySelectorAll('#jrPeriodToggle .jr-opt').forEach(b=>b.classList.toggle('sel', b.dataset.val===jrPeriodVal));
+  for(const f of JR_FIELDS) document.getElementById(f.id).value = entry[f.key]!=null ? entry[f.key] : '';
+  const hasDetail = JR_FIELDS.some(f=>entry[f.key]!=null);
+  document.getElementById('jrOptional').hidden = !hasDetail;
+  document.getElementById('jrMoreBtn').textContent = hasDetail ? '– Hide optional details' : '+ Add optional details (heart rate, sleep, temperature…)';
+  document.getElementById('jrDelete').hidden = !journal[day];
+  document.getElementById('jrHint').textContent='';
+  jVeil.classList.add('open');
+}
+document.getElementById('journalX').addEventListener('click',()=>jVeil.classList.remove('open'));
+jVeil.addEventListener('click',e=>{ if(e.target===jVeil) jVeil.classList.remove('open'); });
+document.getElementById('jrPeriodToggle').addEventListener('click',e=>{
+  const b=e.target.closest('.jr-opt'); if(!b) return;
+  jrPeriodVal=b.dataset.val;
+  document.querySelectorAll('#jrPeriodToggle .jr-opt').forEach(x=>x.classList.toggle('sel', x===b));
+});
+document.getElementById('jrMoreBtn').addEventListener('click',()=>{
+  const box=document.getElementById('jrOptional'); const willOpen=box.hidden;
+  box.hidden=!willOpen;
+  document.getElementById('jrMoreBtn').textContent = willOpen ? '– Hide optional details' : '+ Add optional details (heart rate, sleep, temperature…)';
+});
+document.getElementById('jrSave').addEventListener('click',()=>{
+  if(!jrPeriodVal){ document.getElementById('jrHint').textContent='Please mark whether this was a period day, it’s the one thing we need.'; return; }
+  const entry={period:jrPeriodVal};
+  for(const f of JR_FIELDS){
+    const raw=document.getElementById(f.id).value;
+    if(raw!=='' && !isNaN(parseFloat(raw))) entry[f.key]=parseFloat(raw);
+  }
+  unapplyJournalEntry(jrActiveDay);
+  applyJournalEntry(jrActiveDay, entry);
+  journal[jrActiveDay]=entry;
+  saveJournal();
+  recompute(); renderJournalCal();
+  jVeil.classList.remove('open');
+});
+document.getElementById('jrDelete').addEventListener('click',()=>{
+  unapplyJournalEntry(jrActiveDay);
+  delete journal[jrActiveDay];
+  saveJournal();
+  recompute(); renderJournalCal();
+  jVeil.classList.remove('open');
+});
+document.getElementById('jrGrid').addEventListener('click',e=>{
+  const cell=e.target.closest('.jr-cell'); if(!cell || cell.classList.contains('empty')) return;
+  openJournalDay(+cell.dataset.day);
+});
+document.getElementById('jrPrev').addEventListener('click',()=>{ jrViewMonth--; if(jrViewMonth<0){jrViewMonth=11;jrViewYear--;} renderJournalCal(); });
+document.getElementById('jrNext').addEventListener('click',()=>{ jrViewMonth++; if(jrViewMonth>11){jrViewMonth=0;jrViewYear++;} renderJournalCal(); });
+
 /* staged analysis loader, 3–5.5s, randomised each run */
 function runLoader(nFiles, done){
   const box=document.getElementById('loader');
@@ -992,14 +1112,17 @@ async function handleDonation(file){
   }
 }
 
-addEventListener('keydown',e=>{ if(e.key==='Escape'){ veil.classList.remove('open'); mVeil.classList.remove('open'); dVeil.classList.remove('open'); } });
+addEventListener('keydown',e=>{ if(e.key==='Escape'){ veil.classList.remove('open'); mVeil.classList.remove('open'); dVeil.classList.remove('open'); jVeil.classList.remove('open'); } });
 
 /* the "Download a test file" button is a plain <a href download> to a
    static /lutea-test-sample.csv, no JS needed, cannot fail. */
 
 /* initial paint: show the signal cards (with their "why") before any upload,
-   so the user sees exactly what will light up */
-renderSignals();
+   so the user sees exactly what will light up; recompute (not just
+   renderSignals) so any journal entries saved from a previous visit
+   already drive the cycle/insights/screening views */
+recompute();
+renderJournalCal();
 refreshCohort();
 
 })();
