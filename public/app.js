@@ -859,7 +859,8 @@ function renderJournalCal(){
     const entry=journal[day];
     const isPeriod = entry && entry.period==='yes';
     const hasDetail = entry && JR_FIELDS.some(f=>entry[f.key]!=null);
-    html+=`<button type="button" class="jr-cell${day===todayIdx?' today':''}${entry?' has':''}" data-day="${day}">
+    const future = day>todayIdx;   // can't log a day that hasn't happened yet
+    html+=`<button type="button" class="jr-cell${day===todayIdx?' today':''}${entry?' has':''}${future?' future':''}" data-day="${day}"${future?' disabled aria-disabled="true"':''}>
       <span class="jr-daynum">${d}</span>
       ${isPeriod?'<i class="jr-dot period"></i>':''}${hasDetail?'<i class="jr-dot detail"></i>':''}
     </button>`;
@@ -918,7 +919,8 @@ document.getElementById('jrDelete').addEventListener('click',()=>{
   jVeil.classList.remove('open');
 });
 document.getElementById('jrGrid').addEventListener('click',e=>{
-  const cell=e.target.closest('.jr-cell'); if(!cell || cell.classList.contains('empty')) return;
+  const cell=e.target.closest('.jr-cell');
+  if(!cell || cell.classList.contains('empty') || cell.classList.contains('future')) return;
   openJournalDay(+cell.dataset.day);
 });
 document.getElementById('jrPrev').addEventListener('click',()=>{ jrViewMonth--; if(jrViewMonth<0){jrViewMonth=11;jrViewYear--;} renderJournalCal(); });
